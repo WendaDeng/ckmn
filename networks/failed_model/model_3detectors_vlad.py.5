@@ -1,0 +1,190 @@
+import torch
+import torch.nn as nn
+import torch.nn.init as init
+import torch.nn.functional as F
+from torch.nn.parameter import Parameter
+
+import ipdb
+import math
+import numpy as np
+
+from . import object_detector_network
+from . import scene_detector_network
+from . import action_detector_network
+from . import transformer
+
+class Event_Model(nn.Module):
+
+    def __init__(self, opt):
+        super(Event_Model, self).__init__()
+        
+        #### parameters
+        self.opt = opt
+        self.concept_number = opt.scene_classes + opt.object_classes + opt.action_classes
+        self.T = opt.segment_number
+        self.scene_classes = opt.scene_classes
+        self.object_classes = opt.object_classes
+        self.action_classes = opt.action_classes
+        if opt.general_base_model == 'I3D':
+            self.general_feature_dim = 1024
+        else:
+            self.general_feature_dim = 2048
+
+        #### concept detectors
+        self.scene_detector = scene_detector_network.Scene_Detector(opt)
+        self.object_detector = object_detector_network.Object_Detector(opt)
+        self.action_detector = action_detector_network.Action_Detector(opt)
+
+        #### vlad
+        self.alpha = 1000.0
+        self.scene_num_clusters = 196
+        self.scene_soft_weight = nn.Conv1d(self.T, self.scene_num_clusters, kernel_size=(1), bias=True)
+        self.scene_centroids = nn.Parameter(torch.rand(self.scene_num_clusters, self.T))
+        
+        self.object_num_clusters = 196
+        self.object_soft_weight = nn.Conv1d(self.T, self.object_num_clusters, kernel_size=(1), bias=True)
+        self.object_centroids = nn.Parameter(torch.rand(self.object_num_clusters, self.T))
+
+        self.action_num_clusters = 196
+        self.action_soft_weight = nn.Conv1d(self.T, self.action_num_clusters, kernel_size=(1), bias=True)
+        self.action_centroids = nn.Parameter(torch.rand(self.action_num_clusters, self.T))
+
+        #### feature reduce dimentation & fusion
+        self.reduce_temp_dimentation = 512
+        self.reduce_dropout = nn.Dropout(0.5)
+        #self.scene_reduce_dim = nn.Linear(self.scene_num_clusters*self.T , self.reduce_temp_dimentation)
+        #self.object_reduce_dim = nn.Linear(self.object_num_clusters*self.T , self.reduce_temp_dimentation)
+        #self.action_reduce_dim = nn.Linear(self.action_num_clusters*self.T , self.reduce_temp_dimentation)
+        #self.concat_reduce_dim = nn.Linear(self.reduce_temp_dimentation*3 , self.reduce_temp_dimentation)
+        #self.concat_reduce_dim = nn.Linear(self.scene_num_clusters+self.object_num_clusters+self.action_num_clusters, self.reduce_temp_dimentation)
+        self.concat_reduce_dim = nn.Linear((self.scene_num_clusters+self.object_num_clusters+self.action_num_clusters)*self.T, self.reduce_temp_dimentation)
+
+        #### classification
+        self.final_classifier = nn.Linear(self.reduce_temp_dimentation, opt.event_classes)
+        self.relu = nn.ReLU(inplace=False)
+        self.dropout = nn.Dropout(0.5)
+        
+        #### init params
+        self.scene_soft_weight.weight = nn.Parameter((2.0*self.alpha*self.scene_centroids).unsqueeze(-1))
+        self.scene_soft_weight.bias = nn.Parameter(-self.alpha*self.scene_centroids.norm(dim=-1))
+
+        self.object_soft_weight.weight = nn.Parameter((2.0*self.alpha*self.object_centroids).unsqueeze(-1))
+        self.object_soft_weight.bias = nn.Parameter(-self.alpha*self.object_centroids.norm(dim=-1))
+
+        self.action_soft_weight.weight = nn.Parameter((2.0*self.alpha*self.action_centroids).unsqueeze(-1))
+        self.action_soft_weight.bias = nn.Parameter(-self.alpha*self.action_centroids.norm(dim=-1))
+
+        for l in self.children():
+            if isinstance(l, nn.BatchNorm1d):
+                l.weight.data.fill_(1)
+                l.bias.data.zero_()
+            elif isinstance(l, nn.Linear):
+                nn.init.normal_(l.weight, mean=0, std=0.01)
+                nn.init.constant_(l.bias, 0)
+
+
+    def forward(self, sceobj_frame, action_frame):
+        
+        #### concept detector
+        N, T, D, C, H, W = sceobj_frame.size()
+        _, _, _, _, aH, aW = action_frame.size()
+        ## scene and object frame input size N T D C H W
+        # N T D C H W -> NTD C H W
+        sceobj_frame = sceobj_frame.contiguous().view(-1, C, H, W)
+        # NTD C H W -> NTD F
+        scene_feature = self.scene_detector(sceobj_frame)
+        object_feature = self.object_detector(sceobj_frame)
+        del sceobj_frame
+        # NTD F -> N T D F
+        scene_feature = scene_feature.contiguous().view(N, T, D, -1)
+        object_feature = object_feature.contiguous().view(N, T, D, -1)
+        # N T D F -> N T F
+        # segment level scene object concept feature
+        scene_feature, _ = torch.max(scene_feature, dim=2)
+        object_feature, _ = torch.max(object_feature, dim=2)
+        
+        ## action frame inpupt size N T C D aH aW
+        # N T C D aH aW ->  NT C D aH aW
+        action_frame = action_frame.contiguous().view(-1, C, D, aH, aW)
+        # NT C D H W ->  NT F
+        action_feature = self.action_detector(action_frame)
+        del action_frame
+        # NT F -> N T F
+        # segment level action concept feature
+        action_feature = action_feature.contiguous().view(N, T, -1)
+
+        #### vlad
+        #import ipdb; ipdb.set_trace()
+        ## normalize
+        scene_feature_t = scene_feature
+        object_feature_t = object_feature
+        action_feature_t = action_feature
+        
+        ## normalize
+        scene_feature_t = F.normalize(scene_feature_t, p=2, dim=1)
+        object_feature_t = F.normalize(object_feature_t, p=2, dim=1)
+        action_feature_t = F.normalize(action_feature_t, p=2, dim=1)
+        
+        ## scene vlad
+        scene_soft_weight = self.scene_soft_weight(scene_feature_t)
+        scene_soft_weight = F.softmax(scene_soft_weight, dim=1)
+        scene_residual = scene_feature_t.expand(self.scene_num_clusters, -1, -1, -1).permute(1, 0, 2, 3) - \
+                self.scene_centroids.expand(scene_feature_t.size(-1), -1, -1).permute(1, 2, 0).unsqueeze(0)
+        scene_residual *= scene_soft_weight.unsqueeze(2)
+        scene_vlad = scene_residual.sum(dim=-1)
+        scene_vlad = F.normalize(scene_vlad, p=2, dim=2)
+        scene_vlad = scene_vlad.view(N, -1) 
+        scene_vlad = F.normalize(scene_vlad, p=2, dim=1)
+        
+        ## obejct vlad
+        object_soft_weight = self.object_soft_weight(object_feature_t)
+        object_soft_weight = F.softmax(object_soft_weight, dim=1)
+        object_residual = object_feature_t.expand(self.object_num_clusters, -1, -1, -1).permute(1, 0, 2, 3) - \
+                self.object_centroids.expand(object_feature_t.size(-1), -1, -1).permute(1, 2, 0).unsqueeze(0)
+        object_residual *= object_soft_weight.unsqueeze(2)
+        object_vlad = object_residual.sum(dim=-1)
+        object_vlad = F.normalize(object_vlad, p=2, dim=2)
+        object_vlad = object_vlad.view(N, -1) 
+        object_vlad = F.normalize(object_vlad, p=2, dim=1)
+        
+        ## action vlad
+        action_soft_weight = self.action_soft_weight(action_feature_t)
+        action_soft_weight = F.softmax(action_soft_weight, dim=1)
+        action_residual = action_feature_t.expand(self.action_num_clusters, -1, -1, -1).permute(1, 0, 2, 3) - \
+                self.action_centroids.expand(action_feature_t.size(-1), -1, -1).permute(1, 2, 0).unsqueeze(0)
+        action_residual *= action_soft_weight.unsqueeze(2)
+        action_vlad = action_residual.sum(dim=-1)
+        action_vlad = F.normalize(action_vlad, p=2, dim=2)
+        action_vlad = action_vlad.view(N, -1)
+        action_vlad = F.normalize(action_vlad, p=2, dim=1)
+       
+        ## max pooling
+        scene_feature_encod = scene_vlad
+        object_feature_encod = object_vlad
+        action_feature_encod = action_vlad
+
+        #scene_feature_encod, _ = torch.max(scene_vlad, dim=2)
+        #object_feature_encod, _ = torch.max(object_vlad, dim=2)
+        #action_feature_encod, _ = torch.max(action_vlad, dim=2)
+
+        #scene_feature_encod = self.reduce_dropout(scene_vlad)
+        #scene_feature_encod = self.scene_reduce_dim(scene_feature_encod)
+        #object_feature_encod = self.reduce_dropout(object_vlad)
+        #object_feature_encod = self.object_reduce_dim(object_feature_encod)
+        #action_feature_encod = self.reduce_dropout(action_vlad)
+        #action_feature_encod = self.action_reduce_dim(action_feature_encod)
+
+        concat_feature = torch.cat((torch.cat((scene_feature_encod, object_feature_encod), 1), action_feature_encod), 1) 
+        concat_feature = F.normalize(concat_feature, dim=1)
+
+        #### reduce dimentation
+        concat_feature = self.relu(concat_feature)
+        concat_feature = self.reduce_dropout(concat_feature)
+        concat_feature = self.concat_reduce_dim(concat_feature)
+
+        #### classification
+        final_classification = self.relu(concat_feature)
+        final_classification = self.dropout(final_classification)
+        final_classification = self.final_classifier(final_classification)
+
+        return final_classification
