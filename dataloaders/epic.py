@@ -108,7 +108,7 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 	annotations = load_annotation_data(os.path.join(root_path, annotation_path))
 	video_path_full = os.path.join(root_path, video_path)
 	video_names = get_video_names(annotations, video_path_full)
-	labels, class_num = get_class_labels(data, class_type)
+	labels, class_num = get_class_labels(annotations, class_type)
 
 	dataset = []
 	# test_file = open('/DATA/disk1/qzb/datasets/FCVID/test_files_' + subset + '.txt', 'w')
