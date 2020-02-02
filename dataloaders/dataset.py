@@ -63,7 +63,7 @@ def get_validation_set(opt, sceobj_spatial_transform, temporal_transform):
                 spatial_transform=sceobj_spatial_transform,
                 temporal_transform=temporal_transform)
     elif opt.dataset == 'EPIC':
-        training_data = EPIC(
+        validation_data = EPIC(
             opt.data_root_path,
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_val_action_labels.pkl'),
