@@ -73,7 +73,7 @@ def load_annotation_data(data_file_path):
 	data = []
 	for i, row in labels.iterrows():
 		metadata = row.to_dict()
-		metadata["uid"] = i
+		metadata['uid'] = i
 		data.append(metadata)
 	return data
 
@@ -84,12 +84,12 @@ def get_class_labels(metadata, class_type='verb'):
 	class_num = 125
 	if class_type == 'verb':
 		for data in metadata:
-			class_labels_map[index] = data[index].verb_class
+			class_labels_map[index] = data[index]['verb_class']
 			index += 1
 	elif class_type == 'noun':
 		class_num = 331
 		for data in metadata:
-			class_labels_map[index] = data[index].noun_class
+			class_labels_map[index] = data[index]['noun_class']
 			index += 1
 	return class_labels_map, class_num
 
