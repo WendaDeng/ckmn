@@ -43,7 +43,7 @@ def parse_opts():
     parser.add_argument(
         '--data_root_path',
         # default='/DATA/disk1/qzb/datasets/',
-        default='/mnt/shared_40t/dwd/epic-kitchens/orn/data/epic',
+        default='/mnt/shared_40t/dwd/epic-kitchens/orn/data/',
         type=str,
         help='Root directory path of data')
     parser.add_argument(

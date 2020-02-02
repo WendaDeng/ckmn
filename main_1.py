@@ -46,17 +46,25 @@ if __name__ == '__main__':
         opt.event_classes = 238
     elif opt.dataset == 'ActivityNet':
         opt.event_classes = 200
+    elif opt.dataset == 'EPIC':
+        opt.event_classes = 125
 
     # set path
     if opt.data_root_path != '':
         opt.video_path = os.path.join(
             opt.data_root_path, opt.dataset, opt.video_path)
-        opt.annotation_path = os.path.join(
-            opt.data_root_path,
-            opt.dataset,
-            opt.annotation_path +
-            opt.dataset +
-            '.json')
+        if opt.dataset == 'EPIC':
+            opt.annotation_path = os.path.join(
+                opt.data_root_path,
+                opt.dataset,
+                opt.annotation_path)
+        else:
+            opt.annotation_path = os.path.join(
+                opt.data_root_path,
+                opt.dataset,
+                opt.annotation_path +
+                opt.dataset +
+                '.json')
     if opt.result_path != '':
         opt.result_path = os.path.join(
             opt.result_path,
