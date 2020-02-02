@@ -83,13 +83,13 @@ def get_class_labels(metadata, class_type='verb'):
 	index = 0
 	class_num = 125
 	if class_type == 'verb':
-		for id, data in enumerate(metadata):
-			class_labels_map[index] = data[id].verb_class
+		for data in metadata:
+			class_labels_map[index] = data[index].verb_class
 			index += 1
 	elif class_type == 'noun':
 		class_num = 331
-		for id, data in enumerate(metadata):
-			class_labels_map[index] = data[id].noun_class
+		for data in metadata:
+			class_labels_map[index] = data[index].noun_class
 			index += 1
 	return class_labels_map, class_num
 
