@@ -78,22 +78,6 @@ def load_annotation_data(data_file_path):
 	return data
 
 
-def get_class_labels(metadata, class_type='verb'):
-	class_labels_map = {}
-	index = 0
-	class_num = 125
-	if class_type == 'verb':
-		for data in metadata:
-			class_labels_map[index] = data[index]['verb_class']
-			index += 1
-	elif class_type == 'noun':
-		class_num = 331
-		for data in metadata:
-			class_labels_map[index] = data[index]['noun_class']
-			index += 1
-	return class_labels_map, class_num
-
-
 def get_video_names(metadata, video_path_full):
 	video_names = []
 	for data in metadata:
@@ -108,7 +92,7 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 	annotations = load_annotation_data(os.path.join(root_path, annotation_path))
 	video_path_full = os.path.join(root_path, video_path)
 	video_names = get_video_names(annotations, video_path_full)
-	labels, class_num = get_class_labels(annotations, class_type)
+	class_num = 125 if class_type == 'verb' else 331
 
 	dataset = []
 	# test_file = open('/DATA/disk1/qzb/datasets/FCVID/test_files_' + subset + '.txt', 'w')
@@ -131,7 +115,10 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 		}
 		# ipdb.set_trace()
 		temp_label = np.zeros(class_num)
-		temp_label[int(labels[i])] = 1
+		if class_type == 'verb':
+			temp_label[int(annotations[i]['verb_class'])] = 1
+		elif class_type == 'noun':
+			temp_label[int(annotations[i]['noun_class'])] = 1
 
 		sample['label'] = temp_label
 
