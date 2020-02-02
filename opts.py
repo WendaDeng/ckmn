@@ -55,7 +55,7 @@ def parse_opts():
     parser.add_argument(
         '--annotation_path',
         # default='video_labels/',
-        default='meta/train_labels.pkl',
+        default='meta',
         type=str,
         help='Annotation file path')
     parser.add_argument(
@@ -66,7 +66,7 @@ def parse_opts():
     parser.add_argument(
         '--resume_path',
         #default='',
-        default='Dec25_10-22-29/train_15_model.pth',
+        default='resume/train_1_model.pth',
         type=str,
         help='Save data (.pth) of previous training')
 
@@ -106,12 +106,12 @@ def parse_opts():
         '--object_classes',
         default=1000,
         type=int,
-        help='Number of scene classes')
+        help='Number of object classes')
     parser.add_argument(
         '--action_classes',
         default=400,
         type=int,
-        help='Number of scene classes')
+        help='Number of action classes')
 
     # gpu
     parser.add_argument(

@@ -174,7 +174,7 @@ class EPIC(data.Dataset):
 		sceobj_clip = []
 		for i in range(len(frame_indices)):
 			clip = self.loader(path, frame_indices[i])
-
+			temp_sceobj_clip = []
 			if self.spatial_transform is not None:
 				self.spatial_transform.randomize_parameters()
 				temp_sceobj_clip = [self.spatial_transform(img) for img in clip]

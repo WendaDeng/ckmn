@@ -1,3 +1,4 @@
+import os
 from dataloaders.fcvid import FCVID
 from dataloaders.ccv import CCV
 from dataloaders.activitynet import ActivityNet
@@ -31,7 +32,7 @@ def get_training_set(opt, sceobj_spatial_transform, temporal_transform):
         training_data = EPIC(
             opt.data_root_path,
             opt.video_path,
-            opt.annotation_path,
+            os.path.join(opt.annotation_path, 'EPIC_train_action_labels.pkl'),
             class_type='verb',
             spatial_transform=sceobj_spatial_transform,
             temporal_transform=temporal_transform)
@@ -61,5 +62,12 @@ def get_validation_set(opt, sceobj_spatial_transform, temporal_transform):
                 'validation',
                 spatial_transform=sceobj_spatial_transform,
                 temporal_transform=temporal_transform)
-
+    elif opt.dataset == 'EPIC':
+        training_data = EPIC(
+            opt.data_root_path,
+            opt.video_path,
+            os.path.join(opt.annotation_path, 'EPIC_val_action_labels.pkl'),
+            class_type='verb',
+            spatial_transform=sceobj_spatial_transform,
+            temporal_transform=temporal_transform)
     return validation_data
