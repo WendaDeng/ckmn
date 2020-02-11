@@ -11,6 +11,7 @@ from utils import AverageMeter, calculate_mAP_sklearn, calculate_mAP_sklearn_new
 
 
 def performance(prediction, target):
+    ipdb.set_trace()
     prediction = F.sigmoid(prediction)
     mAP_new = calculate_mAP_sklearn_new(prediction, target)
     print('sigmoid-sklearn:', mAP_new)

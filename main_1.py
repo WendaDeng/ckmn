@@ -240,7 +240,6 @@ if __name__ == '__main__':
         scheduler.step()
 
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
-        scheduler.step()
         if not opt.no_train:
             cudnn.benchmark = True
             train_epoch(i, train_loader, model, criterion, optimizer, opt, train_logger, writer)
@@ -255,5 +254,7 @@ if __name__ == '__main__':
 
         if not opt.no_val and i % opt.val_per_epoches == 0:
             val_epoch(i, val_loader, model, opt, val_logger, writer)
+
+        scheduler.step()
     
     writer.close()
