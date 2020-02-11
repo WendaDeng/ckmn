@@ -161,10 +161,10 @@ def calculate_mAP_sklearn(outputs, targets):
     return mAP
 
 def calculate_mAP_sklearn_new(outputs, targets):
-    #ipdb.set_trace()
+    # ipdb.set_trace()
     class_num = np.size(targets, 1)
     mAP = []
-
+    np.seterr(divide='ignore', invalid='ignore')
     for idx in range(class_num):
         mAP.append(average_precision_score(targets[:, idx], outputs[:, idx]))
 
