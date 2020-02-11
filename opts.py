@@ -65,7 +65,7 @@ def parse_opts():
         help='Result directory path')
     parser.add_argument(
         '--resume_path',
-        default='',
+        default='resume',
         # default='resume/train_1_model.pth',
         type=str,
         help='Save data (.pth) of previous training')
