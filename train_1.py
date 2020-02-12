@@ -11,7 +11,7 @@ from utils import AverageMeter, calculate_mAP_sklearn, calculate_mAP_sklearn_new
 
 
 def performance(prediction, target):
-    ipdb.set_trace()
+    # ipdb.set_trace()
     prediction = torch.sigmoid(prediction)
     mAP_new = calculate_mAP_sklearn_new(prediction, target)
     print('sigmoid-sklearn:', mAP_new)
@@ -44,7 +44,8 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         inputs = data[0]
         targets = data[1].float()
 
-        all_targets.append(targets)
+        for j in range(targets.shape[0]):
+            all_targets.append(targets[j])
 
         inputs = inputs.to(opt.device)
         targets = targets.to(opt.device)
@@ -53,7 +54,8 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
         outputs = model(inputs)
 
-        classification_results_final.append(outputs.cpu().data)
+        for j in range(outputs.shape[0]):
+            classification_results_final.append(outputs[j].cpu().data)
 
         loss = criterion(outputs, targets)
         loss.backward()
