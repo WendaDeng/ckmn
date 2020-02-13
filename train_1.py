@@ -44,8 +44,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         inputs = data[0]
         targets = data[1].float()
 
-        for j in range(targets.shape[0]):
-            all_targets.append(targets[j])
+        all_targets.append(targets)
 
         inputs = inputs.to(opt.device)
         targets = targets.to(opt.device)
@@ -54,8 +53,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
         outputs = model(inputs)
 
-        for j in range(outputs.shape[0]):
-            classification_results_final.append(outputs[j].cpu().data)
+        classification_results_final.append(outputs.cpu().data)
 
         loss = criterion(outputs, targets)
         loss.backward()

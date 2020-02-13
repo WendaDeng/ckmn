@@ -2,6 +2,7 @@ import csv
 import numpy as np
 from sklearn.metrics import average_precision_score
 import ipdb
+import torch
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -165,6 +166,8 @@ def calculate_mAP_sklearn_new(outputs, targets):
     class_num = np.size(targets, 1)
     mAP = []
     for idx in range(class_num):
+        if torch.sum(targets[:, idx]) < 1.0:
+            continue
         mAP.append(average_precision_score(targets[:, idx], outputs[:, idx]))
 
     mAP = np.mean(mAP)
