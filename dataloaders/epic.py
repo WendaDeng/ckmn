@@ -101,6 +101,7 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 			print('dataset loading [{}/{}]'.format(i, len(video_names)))
 
 		if not os.path.exists(video_names[i]):
+			print(video_names[i])
 			continue
 
 		frame_indices = os.listdir(video_names[i])
