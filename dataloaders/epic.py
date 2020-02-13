@@ -82,7 +82,7 @@ def get_video_names(metadata, video_path_full):
 	video_names = []
 	for data in metadata:
 		video_fn = '{}/{}/{}_{}_{}'.format(data['participant_id'], data['video_id'], data['video_id'],
-											  data['uid'], '-'.join(data['narration']))
+											  data['uid'], data['narration'].replace(' ', '-'))
 		video_names.append(os.path.join(video_path_full, video_fn))
 
 	return video_names
