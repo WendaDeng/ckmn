@@ -90,7 +90,6 @@ def get_video_names(metadata, video_path_full):
 
 
 def make_dataset(root_path, video_path, annotation_path, class_type):
-	ipdb.set_trace()
 	annotations = load_annotation_data(os.path.join(root_path, annotation_path))
 	video_path_full = os.path.join(root_path, video_path)
 	video_names = get_video_names(annotations, video_path_full)
@@ -130,6 +129,7 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 		# test_file.write(sample['video_id'] + ' ' + class_indexs + '\n')
 
 	# test_file.close()
+	ipdb.set_trace()
 	print('len of dataset', len(dataset))
 	return dataset
 
