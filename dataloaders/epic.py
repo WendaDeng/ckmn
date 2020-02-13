@@ -24,6 +24,7 @@ import copy
 import numpy as np
 from utils import load_value_file, load_list_file
 import jpeg4py as jpeg
+import ipdb
 
 
 def pil_loader(path):
@@ -89,11 +90,13 @@ def get_video_names(metadata, video_path_full):
 
 
 def make_dataset(root_path, video_path, annotation_path, class_type):
+	ipdb.set_trace()
 	annotations = load_annotation_data(os.path.join(root_path, annotation_path))
 	video_path_full = os.path.join(root_path, video_path)
 	video_names = get_video_names(annotations, video_path_full)
 	class_num = 125 if class_type == 'verb' else 331
-
+	print('len of annotations', len(annotations))
+	print('len of video_names', len(video_names))
 	dataset = []
 	# test_file = open('/DATA/disk1/qzb/datasets/FCVID/test_files_' + subset + '.txt', 'w')
 	for i in range(len(video_names)):
@@ -127,7 +130,7 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 		# test_file.write(sample['video_id'] + ' ' + class_indexs + '\n')
 
 	# test_file.close()
-
+	print('len of dataset', len(dataset))
 	return dataset
 
 

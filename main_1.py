@@ -168,6 +168,7 @@ if __name__ == '__main__':
         #                         std=[0.229, 0.224, 0.225])
         #])
         training_data = get_training_set(opt, sceobj_spatial_transform, temporal_transform)
+        print('len of training data', len(training_data))
 
         train_loader = DataLoaderX(
             training_data,
