@@ -27,6 +27,7 @@ from warmup_scheduler import GradualWarmupScheduler
 from radam import RAdam
 from torch.utils.data import DataLoader
 from prefetch_generator import BackgroundGenerator
+import numpy as np
 
 class DataLoaderX(DataLoader):
     def __iter__(self):
@@ -237,13 +238,18 @@ if __name__ == '__main__':
     #scheduler = GradualWarmupScheduler(optimizer, multiplier=100, total_epoch=4, after_scheduler=scheduler_cosine)
     #scheduler = GradualWarmupScheduler(optimizer, multiplier=1000, total_epoch=6, after_scheduler=scheduler_cosine)
 
+    stats_dict = dict(train_loss=np.zeros((opt.n_epochs,)), train_verb_acc=np.zeros((opt.n_epochs,)),
+                      val_loss=np.zeros((opt.n_epochs,)), val_verb_acc=np.zeros((opt.n_epochs,)))
+
     for _ in range(1, opt.begin_epoch):
         scheduler.step()
 
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
         if not opt.no_train:
             cudnn.benchmark = True
-            train_epoch(i, train_loader, model, criterion, optimizer, opt, train_logger, writer)
+            training_metrics = train_epoch(i, train_loader, model, criterion, optimizer, opt, train_logger, writer)
+            for k, v in training_metrics.items():
+                stats_dict[k][i] = v
 
         if i % opt.checkpoint == 0:
             save_file_path = os.path.join(opt.save_path, 'train_' + str(i+1) + '_model.pth')
@@ -254,7 +260,9 @@ if __name__ == '__main__':
             torch.save(states, save_file_path)
 
         if not opt.no_val and i % opt.val_per_epoches == 0:
-            val_epoch(i, val_loader, model, opt, val_logger, writer)
+            test_metrics = val_epoch(i, val_loader, model, criterion, opt, val_logger, writer)
+            for k, v in test_metrics.items():
+                stats_dict[k][i] = v
 
         scheduler.step()
     

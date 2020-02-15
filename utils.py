@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.metrics import average_precision_score
 import ipdb
 import torch
+import torch.nn.functional as F
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -57,6 +59,32 @@ def load_list_file(file_path):
         lists = input_file.readlines()
 
     return lists
+
+
+def performance(prediction, target):
+    # ipdb.set_trace()
+    prediction = torch.sigmoid(prediction)
+    mAP_new = calculate_mAP_sklearn_new(prediction, target)
+    print('sigmoid-sklearn:', mAP_new)
+
+    prediction = F.softmax(prediction, dim=1)
+    mAP_new_st = calculate_mAP_sklearn_new(prediction, target)
+    print('softmax-sklearn:', mAP_new_st)
+
+    return mAP_new, mAP_new_st
+
+
+def accuracy(preds: torch.Tensor, truths: torch.Tensor, topk: tuple = (1,)) -> tuple:
+    res = []
+    for n in topk:
+        best_n = np.argsort(preds, axis=1)[:,-n:]
+        ts = np.argmax(truths, axis=1)
+        successes = 0
+        for i in range(ts.shape[0]):
+          if ts[i] in best_n[i,:]:
+            successes += 1
+        res.append(float(successes)/ts.shape[0])
+    return tuple(res)
 
 
 def calculate_accuracy(outputs, targets):

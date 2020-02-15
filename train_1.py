@@ -8,33 +8,7 @@ import ipdb
 import numpy as np
 #from apex import amp
 
-from utils import AverageMeter, calculate_mAP_sklearn, calculate_mAP_sklearn_new, calculate_mAP_sklearn_new_noback
-
-
-def performance(prediction, target):
-    # ipdb.set_trace()
-    prediction = torch.sigmoid(prediction)
-    mAP_new = calculate_mAP_sklearn_new(prediction, target)
-    print('sigmoid-sklearn:', mAP_new)
-
-    prediction = F.softmax(prediction, dim=1)
-    mAP_new_st = calculate_mAP_sklearn_new(prediction, target)
-    print('softmax-sklearn:', mAP_new_st)
-
-    return mAP_new, mAP_new_st
-
-
-def accuracy(preds: torch.Tensor, truths: torch.Tensor, topk: tuple = (1,)) -> tuple:
-    res = []
-    for n in topk:
-        best_n = np.argsort(preds, axis=1)[:,-n:]
-        ts = np.argmax(truths, axis=1)
-        successes = 0
-        for i in range(ts.shape[0]):
-          if ts[i] in best_n[i,:]:
-            successes += 1
-        res.append(float(successes)/ts.shape[0])
-    return tuple(res)
+from utils import AverageMeter, accuracy, calculate_mAP_sklearn_new, performance
 
 
 def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
@@ -94,9 +68,9 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
                   'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'Loss ({loss.avg:.4f})\t'
-				  'Verb Prec@1 {verb_top1.val:.3f} ({verb_top1.avg:.3f})\t'
+                  'Verb Prec@1 {verb_top1.val:.3f} ({verb_top1.avg:.3f})\t'
                   'Verb Prec@5 {verb_top5.val:.3f} ({verb_top5.avg:.3f})\t'
-				  .format(
+                  .format(
                       epoch, i + 1, len(data_loader),
                       batch_time=batch_time, data_time=data_time,
                       loss=losses, verb_top1=verb_top1, verb_top5=verb_top5))
@@ -118,3 +92,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
     writer.add_scalar('train/learning_rate_epoch', opt.learning_rate, epoch)
     writer.add_scalar('train/verb_top1', verb_top1.avg, epoch)
     writer.add_scalar('train/verb_top5', verb_top5.avg, epoch)
+    training_metrics = {'train_loss': losses.avg,
+                        'train_verb_acc': verb_top1.avg}
+    return training_metrics
