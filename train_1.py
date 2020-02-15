@@ -96,10 +96,10 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
                   'Loss ({loss.avg:.4f})\t'
 				  'Verb Prec@1 {verb_top1.val:.3f} ({verb_top1.avg:.3f})\t'
                   'Verb Prec@5 {verb_top5.val:.3f} ({verb_top5.avg:.3f})\t'
-				  ).format(
+				  .format(
                       epoch, i + 1, len(data_loader),
                       batch_time=batch_time, data_time=data_time,
-                      loss=losses, verb_top1=verb_top1, verb_top5=verb_top5)
+                      loss=losses, verb_top1=verb_top1, verb_top5=verb_top5))
 
     classification_results_final = torch.cat(classification_results_final, dim=0)
     all_targets = torch.cat(all_targets, dim=0)

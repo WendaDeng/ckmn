@@ -214,7 +214,7 @@ if __name__ == '__main__':
     ## train process
     if opt.resume_path:
         print('loading checkpoint {}'.format(opt.resume_path))
-        checkpoint = torch.load(opt.resume_path)
+        checkpoint = torch.load(opt.resume_path, map_location=opt.device)
 
         opt.begin_epoch = checkpoint['epoch']
         #state_dict = {str.replace(k, 'module.', ''):v for k, v in checkpoint['state_dict'].items()}
