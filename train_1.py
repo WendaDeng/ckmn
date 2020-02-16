@@ -44,6 +44,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         outputs = model(inputs)
 
         classification_results_final.append(outputs.cpu().data)
+
         verb_prec1, verb_prec5 = accuracy(outputs.cpu().data, targets.cpu().data, topk=(1, 5))
         verb_top1.update(verb_prec1, inputs.size(0))
         verb_top5.update(verb_prec5, inputs.size(0))
@@ -85,7 +86,9 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         'loss': losses.avg,
         'final_mAP_sigmoid': final_mAP_sigmoid,
         'final_mAP_softmax': final_mAP_softmax,
-        'lr': optimizer.param_groups[-1]['lr']
+        'lr': optimizer.param_groups[-1]['lr'],
+		'verb_top1': verb_top1.avg,
+		'verb_top5': verb_top5.avg
     })
 
     writer.add_scalar('train/loss_epoch', losses.avg, epoch)
@@ -93,5 +96,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
     writer.add_scalar('train/verb_top1', verb_top1.avg, epoch)
     writer.add_scalar('train/verb_top5', verb_top5.avg, epoch)
     training_metrics = {'train_loss': losses.avg,
-                        'train_verb_acc': verb_top1.avg}
+                        'train_verb_top1': verb_top1.avg,
+						'train_verb_top5': verb_top5.avg}
     return training_metrics

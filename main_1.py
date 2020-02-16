@@ -238,8 +238,11 @@ if __name__ == '__main__':
     #scheduler = GradualWarmupScheduler(optimizer, multiplier=100, total_epoch=4, after_scheduler=scheduler_cosine)
     #scheduler = GradualWarmupScheduler(optimizer, multiplier=1000, total_epoch=6, after_scheduler=scheduler_cosine)
 
-    stats_dict = dict(train_loss=np.zeros((opt.n_epochs,)), train_verb_acc=np.zeros((opt.n_epochs,)),
-                      val_loss=np.zeros((opt.n_epochs,)), val_verb_acc=np.zeros((opt.n_epochs,)))
+    stats_dict = dict(train_loss=np.zeros((opt.n_epochs+1,)),
+					  train_verb_top1=np.zeros((opt.n_epochs+1,)),
+					  train_verb_top5=np.zeros((opt.n_epochs+1,)),
+                      val_verb_top1=np.zeros((opt.n_epochs+1,)),
+					  val_verb_top5=np.zeros((opt.n_epochs+1,)))
 
     for _ in range(1, opt.begin_epoch):
         scheduler.step()
@@ -252,9 +255,9 @@ if __name__ == '__main__':
                 stats_dict[k][i] = v
 
         if i % opt.checkpoint == 0:
-            save_file_path = os.path.join(opt.save_path, 'train_' + str(i+1) + '_model.pth')
+            save_file_path = os.path.join(opt.save_path, 'train_' + str(i) + '_model.pth')
             states = {
-                'epoch': i + 1,
+                'epoch': i,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),}
             torch.save(states, save_file_path)
@@ -267,3 +270,9 @@ if __name__ == '__main__':
         scheduler.step()
     
     writer.close()
+
+    save_stats_dir = os.path.join(opt.save_path, 'stats')
+    if not os.path.exists(save_stats_dir):
+        os.makedirs(save_stats_dir)
+    with open(os.path.join(save_stats_dir, 'training_stats.npz'), 'wb') as f:
+        np.savez(f, **stats_dict)
