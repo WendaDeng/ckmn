@@ -180,7 +180,7 @@ if __name__ == '__main__':
             drop_last=True)
         train_logger = Logger(
             os.path.join(opt.save_path, 'train.log'),
-            ['epoch', 'loss', 'final_mAP_sigmoid', 'final_mAP_softmax', 'lr'])
+            ['epoch', 'loss', 'final_mAP_sigmoid', 'final_mAP_softmax', 'lr', 'verb_top1', 'verb_top5'])
 
     ## prepare validation
     if not opt.no_val:
