@@ -210,7 +210,8 @@ if __name__ == '__main__':
             drop_last=True)
 
         val_logger = Logger(
-            os.path.join(opt.save_path, 'val.log'), ['epoch', 'final_mAP_sigmoid', 'final_mAP_softmax'])
+            os.path.join(opt.save_path, 'val.log'),
+			['epoch', 'final_mAP_sigmoid', 'final_mAP_softmax', 'verb_top1', 'verb_top5'])
 
     ## train process
     if opt.resume_path:
