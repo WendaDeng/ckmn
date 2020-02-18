@@ -89,11 +89,11 @@ def get_video_names(metadata, video_path_full):
 	return video_names
 
 
-def make_dataset(root_path, video_path, annotation_path, class_type):
+def make_dataset(root_path, video_path, annotation_path, class_num):
 	annotations = load_annotation_data(os.path.join(root_path, annotation_path))
 	video_path_full = os.path.join(root_path, video_path)
 	video_names = get_video_names(annotations, video_path_full)
-	class_num = 125 if class_type == 'verb' else 331
+
 	print('len of video_names', len(video_names))
 	dataset = []
 	# test_file = open('/DATA/disk1/qzb/datasets/FCVID/test_files_' + subset + '.txt', 'w')
@@ -116,13 +116,11 @@ def make_dataset(root_path, video_path, annotation_path, class_type):
 			'frame_indices': frame_indices
 		}
 		# ipdb.set_trace()
-		temp_label = np.zeros(class_num)
-		if class_type == 'verb':
-			temp_label[int(annotations[i]['verb_class'])] = 1
-		elif class_type == 'noun':
-			temp_label[int(annotations[i]['noun_class'])] = 1
+		verb_label, noun_label = np.zeros(class_num[0]), np.zeros(class_num[1])
+		verb_label[int(annotations[i]['verb_class'])] = 1
+		noun_label[int(annotations[i]['noun_class'])] = 1
 
-		sample['label'] = temp_label
+		sample['label'] = {'verb': verb_label, 'noun': noun_label}
 
 		dataset.append(sample)
 		# test_file.write(sample['video_id'] + ' ' + class_indexs + '\n')
@@ -138,12 +136,12 @@ class EPIC(data.Dataset):
 				 root_path,
 				 video_path,
 				 annotation_path,
-				 class_type='verb',
+				 class_num=(125, 352),
 				 spatial_transform=None,
 				 temporal_transform=None,
 				 get_loader=get_default_video_loader):
 
-		self.data = make_dataset(root_path, video_path, annotation_path, class_type)
+		self.data = make_dataset(root_path, video_path, annotation_path, class_num)
 
 		self.spatial_transform = spatial_transform
 		self.temporal_transform = temporal_transform

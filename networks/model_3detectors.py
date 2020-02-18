@@ -16,14 +16,16 @@ class Event_Model(nn.Module):
         super(Event_Model, self).__init__()
 
         self.concept_number = opt.scene_classes + opt.object_classes + opt.action_classes
-        self.latent_dimentation = 512
+        self.latent_dimension = 512
+        self.num_class = opt.event_classes
 
         self.scene_detector = scene_detector_network.Scene_Detector(opt)
         self.object_detector = object_detector_network.Object_Detector(opt)
         self.action_detector = action_detector_network.Action_Detector(opt)
 	
-        self.concat_reduce_dim = nn.Linear(self.concept_number, self.latent_dimentation)
-        self.final_classifier = nn.Linear(self.latent_dimentation, opt.event_classes)
+        self.concat_reduce_dim = nn.Linear(self.concept_number, self.latent_dimension)
+        self._add_classification_layer(self.latent_dimension)
+        # self.final_classifier = nn.Linear(self.latent_dimension, opt.event_classes)
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU(inplace=True)
 
@@ -37,6 +39,14 @@ class Event_Model(nn.Module):
                 nn.init.normal_(l.weight, 0, 0.01)
                 #nn.init.kaiming_normal_(l.weight, mode='fan_out', nonlinearity='relu')
                 nn.init.constant_(l.bias, 0)
+
+
+    def _add_classification_layer(self, input_dim):
+        if isinstance(self.num_class, (list, tuple)):  # Multi-task
+            self.fc_verb = nn.Linear(input_dim, self.num_class[0])
+            self.fc_noun = nn.Linear(input_dim, self.num_class[1])
+        else:
+            self.fc_action = nn.Linear(input_dim, self.num_class)
 
 
     def forward(self, sceobj_frame):
@@ -83,6 +93,16 @@ class Event_Model(nn.Module):
 
         classification = self.relu(classification)
         classification = self.dropout(classification)
-        classification = self.final_classifier(classification)
 
-        return classification
+        if isinstance(self.num_class, (list, tuple)):  # Multi-task
+            # Verb
+            base_out_verb = self.fc_verb(classification)
+
+            # Noun
+            base_out_noun = self.fc_noun(classification)
+
+            output = (base_out_verb, base_out_noun)
+        else:
+            output = self.fc_action(classification)
+
+        return output

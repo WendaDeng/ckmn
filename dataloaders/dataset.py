@@ -33,7 +33,6 @@ def get_training_set(opt, sceobj_spatial_transform, temporal_transform):
             opt.data_root_path,
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_train_action_labels.pkl'),
-            class_type='verb',
             spatial_transform=sceobj_spatial_transform,
             temporal_transform=temporal_transform)
     return training_data
@@ -67,7 +66,6 @@ def get_validation_set(opt, sceobj_spatial_transform, temporal_transform):
             opt.data_root_path,
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_val_action_labels.pkl'),
-            class_type='verb',
             spatial_transform=sceobj_spatial_transform,
             temporal_transform=temporal_transform)
     return validation_data
