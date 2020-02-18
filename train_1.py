@@ -62,11 +62,11 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
             verb_output = outputs[0]
             noun_output = outputs[1]
-            verb_prec1, verb_prec5 = my_accuracy(outputs[0].cpu().data, target['verb'].cpu().data, topk=(1, 5))
+            verb_prec1, verb_prec5 = accuracy(outputs[0], target['verb'], topk=(1, 5))
             verb_top1.update(verb_prec1, batch_size)
             verb_top5.update(verb_prec5, batch_size)
 
-            noun_prec1, noun_prec5 = my_accuracy(outputs[1].cpu().data, target['noun'].cpu().data, topk=(1, 5))
+            noun_prec1, noun_prec5 = accuracy(outputs[1], target['noun'], topk=(1, 5))
             noun_top1.update(noun_prec1, batch_size)
             noun_top5.update(noun_prec5, batch_size)
 
@@ -108,12 +108,12 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
                  'Verb Prec@5 {verb_top5.val:.3f} ({verb_top5.avg:.3f})\t' +
                  'Noun Prec@1 {noun_top1.val:.3f} ({noun_top1.avg:.3f})\t' +
                  'Noun Prec@5 {noun_top5.val:.3f} ({noun_top5.avg:.3f})'
-                 ).format(
+                 .format(
                     epoch, i, len(data_loader), batch_time=batch_time,
                     data_time=data_time, loss=losses, verb_loss=verb_losses,
                     noun_loss=noun_losses, top1=top1, top5=top5,
                     verb_top1=verb_top1, verb_top5=verb_top5,
-                    noun_top1=noun_top1, noun_top5=noun_top5, lr=optimizer.param_groups[-1]['lr'])
+                    noun_top1=noun_top1, noun_top5=noun_top5, lr=optimizer.param_groups[-1]['lr']))
 
     # classification_results_final = torch.cat(classification_results_final, dim=0)
     # all_targets = torch.cat(all_targets, dim=0)

@@ -87,13 +87,13 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, writer):
              "Verb Loss {verb_loss.avg:.5f} "
              "Noun Loss {noun_loss.avg:.5f} "
              "Loss {loss.avg:.5f}"
-              ).format(
+              .format(
                 verb_top1=verb_top1, verb_top5=verb_top5,
                 noun_top1=noun_top1, noun_top5=noun_top5,
                 top1=top1, top5=top5,
                 verb_loss=verb_losses,
                 noun_loss=noun_losses,
-                loss=losses)
+                loss=losses))
     # classification_results_final = torch.cat(classification_results_final, dim=0)
     # all_targets = torch.cat(all_targets, dim=0)
 
