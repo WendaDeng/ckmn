@@ -91,10 +91,11 @@ def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     maxk = max(topk)
     batch_size = target.size(0)
+    target = (target == 1.0).nonzero().t()[1]
 
     _, pred = output.topk(maxk, 1, True, True)
     pred = pred.t()
-    correct = pred.eq(target.view(1, -1))
+    correct = pred.eq(target.view(1, -1).expand_as(pred))
 
     res = []
     for k in topk:
@@ -109,7 +110,8 @@ def multitask_accuracy(outputs, labels, topk=(1,)):
         outputs: tuple(torch.FloatTensor), each tensor should be of shape
             [batch_size, class_count], class_count can vary on a per task basis, i.e.
             outputs[i].shape[1] can be different to outputs[j].shape[j].
-        labels: tuple(torch.LongTensor), each tensor should be of shape [batch_size, class_count]
+        labels: tuple(torch.LongTensor), each tensor has shape [batch_size, class_count]
+            but we need shape of [batch_size]
         topk: tuple(int), compute accuracy at top-k for the values of k specified
             in this parameter.
     Returns:
@@ -122,10 +124,12 @@ def multitask_accuracy(outputs, labels, topk=(1,)):
     if torch.cuda.is_available():
         all_correct = all_correct.cuda()
     for output, label in zip(outputs, labels):
+        # make label from [batch_size, class_count] to [batch_size]
+        label = (label == 1.0).nonzero().t()[1]
         _, max_k_idx = output.topk(max_k, dim=1, largest=True, sorted=True)
         # Flip batch_size, class_count as .view doesn't work on non-contiguous
         max_k_idx = max_k_idx.t()
-        correct_for_task = max_k_idx.eq(label.view(1, -1))
+        correct_for_task = max_k_idx.eq(label.view(1, -1).expand_as(max_k_idx))
         all_correct.add_(correct_for_task)
 
     accuracies = []

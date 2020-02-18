@@ -39,7 +39,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         data_time.update(time.time() - end_time)
 
         inputs = data[0]
-        targets = data[1].float()
+        targets = data[1]
 
         # all_targets.append(targets)
 
