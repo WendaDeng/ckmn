@@ -25,7 +25,8 @@ def generate_model(opt):
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
        
-        scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
+        # scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
+        scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
         temp_scratch = []
 
         parameters = []

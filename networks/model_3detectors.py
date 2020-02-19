@@ -46,7 +46,7 @@ class Event_Model(nn.Module):
             self.fc_verb = nn.Linear(input_dim, self.num_class[0])
             self.fc_noun = nn.Linear(input_dim, self.num_class[1])
         else:
-            self.fc_action = nn.Linear(input_dim, self.num_class)
+            self.final_classifier = nn.Linear(input_dim, self.num_class)
 
 
     def forward(self, sceobj_frame):
@@ -103,6 +103,6 @@ class Event_Model(nn.Module):
 
             output = (base_out_verb, base_out_noun)
         else:
-            output = self.fc_action(classification)
+            output = self.final_classifier(classification)
 
         return output
