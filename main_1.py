@@ -244,10 +244,18 @@ if __name__ == '__main__':
     #scheduler = GradualWarmupScheduler(optimizer, multiplier=1000, total_epoch=6, after_scheduler=scheduler_cosine)
 
     stats_dict = dict(train_loss=np.zeros((opt.n_epochs+1,)),
-					  train_verb_top1=np.zeros((opt.n_epochs+1,)),
-					  train_verb_top5=np.zeros((opt.n_epochs+1,)),
-                      val_verb_top1=np.zeros((opt.n_epochs+1,)),
-					  val_verb_top5=np.zeros((opt.n_epochs+1,)))
+                      train_verb_loss=np.zeros((opt.n_epochs+1,)),
+                      train_noun_loss=np.zeros((opt.n_epochs+1,)),
+                      train_acc=np.zeros((opt.n_epochs+1,)),
+                      train_verb_acc=np.zeros((opt.n_epochs+1,)),
+                      train_noun_acc=np.zeros((opt.n_epochs+1,)),
+                      val_loss=np.zeros((opt.n_epochs+1,)),
+                      val_verb_loss=np.zeros((opt.n_epochs+1,)),
+                      val_noun_loss=np.zeros((opt.n_epochs+1,)),
+                      val_acc=np.zeros((opt.n_epochs+1,)),
+                      val_verb_acc=np.zeros((opt.n_epochs+1,)),
+                      val_noun_acc=np.zeros((opt.n_epochs+1,))
+    )
 
     for _ in range(1, opt.begin_epoch):
         scheduler.step()
