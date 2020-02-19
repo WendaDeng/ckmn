@@ -96,18 +96,18 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         writer.add_scalar('train/loss_iter', losses.val, i + 1 + len(data_loader) * (epoch - 1))
 
         if i % 10 == 0:
-            print('Epoch: [{0}][{1}/{2}], lr: {lr:.5f}\t'
-                 'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                 'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                 'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                 'Verb Loss {verb_loss.val:.4f} ({verb_loss.avg:.4f})\t'
-                 'Noun Loss {noun_loss.val:.4f} ({noun_loss.avg:.4f})\t'
-                 'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})\t'
-                 'Verb Prec@1 {verb_top1.val:.3f} ({verb_top1.avg:.3f})\t'
-                 'Verb Prec@5 {verb_top5.val:.3f} ({verb_top5.avg:.3f})\t'
-                 'Noun Prec@1 {noun_top1.val:.3f} ({noun_top1.avg:.3f})\t'
-                 'Noun Prec@5 {noun_top5.val:.3f} ({noun_top5.avg:.3f})'
+            print('Epoch: [{0}][{1}/{2}], '
+                 'Loss {loss.val:.4f} ({loss.avg:.4f}), '
+                 'Verb Loss {verb_loss.val:.4f} ({verb_loss.avg:.4f}), '
+                 'Noun Loss {noun_loss.val:.4f} ({noun_loss.avg:.4f}), '
+                 'Prec@1 {top1.val:.3f} ({top1.avg:.3f}), '
+                 'Prec@5 {top5.val:.3f} ({top5.avg:.3f}), '
+                 'Verb Prec@1 {verb_top1.val:.3f} ({verb_top1.avg:.3f}), '
+                 'Verb Prec@5 {verb_top5.val:.3f} ({verb_top5.avg:.3f}), '
+                 'Noun Prec@1 {noun_top1.val:.3f} ({noun_top1.avg:.3f}), '
+                 'Noun Prec@5 {noun_top5.val:.3f} ({noun_top5.avg:.3f}), '
+                 'Time {batch_time.val:.3f} ({batch_time.avg:.3f}), '
+                 'Data {data_time.val:.3f} ({data_time.avg:.3f}), lr: {lr:.3f}'
                  .format(
                     epoch, i, len(data_loader), batch_time=batch_time,
                     data_time=data_time, loss=losses, verb_loss=verb_losses,

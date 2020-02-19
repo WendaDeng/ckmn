@@ -181,8 +181,8 @@ if __name__ == '__main__':
         train_logger = Logger(
             os.path.join(opt.save_path, 'train.log'),
             # ['epoch', 'loss', 'final_mAP_sigmoid', 'final_mAP_softmax', 'lr', 'verb_top1', 'verb_top5']
-            ['epoch', 'loss', 'top1', 'top5', 'verb_loss', 'verb_top1', 'verb_top5',
-             'noun_loss', 'noun_top1', 'noun_top5', 'lr'])
+            ['epoch', 'top1', 'top5', 'verb_top1', 'verb_top5', 'noun_top1', 'noun_top5',
+             'loss', 'verb_loss', 'noun_loss', 'lr'])
 
     ## prepare validation
     if not opt.no_val:
@@ -214,7 +214,7 @@ if __name__ == '__main__':
         val_logger = Logger(
             os.path.join(opt.save_path, 'val.log'),
 			# ['epoch', 'final_mAP_sigmoid', 'final_mAP_softmax', 'verb_top1', 'verb_top5']
-            ['epoch', 'loss', 'top1', 'top5', 'verb_top1', 'verb_top5', 'noun_top1', 'noun_top5',
+            ['epoch', 'top1', 'top5', 'verb_top1', 'verb_top5', 'noun_top1', 'noun_top5',
              'loss', 'verb_loss', 'noun_loss'])
 
     ## train process
