@@ -9,10 +9,10 @@ import torchvision
 
 
 # TODO: https://github.com/pytorch/pytorch/issues/26727
-def zeros_like(tensor, dtype):
-    # type: (Tensor, int) -> Tensor
-    return torch.zeros_like(tensor, dtype=dtype, layout=tensor.layout,
-                            device=tensor.device, pin_memory=tensor.is_pinned())
+# def zeros_like(tensor, dtype):
+#     # type: (Tensor, int) -> Tensor
+#     return torch.zeros_like(tensor, dtype=dtype, layout=tensor.layout,
+#                             device=tensor.device, pin_memory=tensor.is_pinned())
 
 
 @torch.jit.script
@@ -69,12 +69,12 @@ class BalancedPositiveNegativeSampler(object):
             neg_idx_per_image = negative[perm2]
 
             # create binary mask from indices
-            pos_idx_per_image_mask = zeros_like(
-                matched_idxs_per_image, dtype=torch.uint8
-            )
-            neg_idx_per_image_mask = zeros_like(
-                matched_idxs_per_image, dtype=torch.uint8
-            )
+            pos_idx_per_image_mask = torch.zeros(
+                matched_idxs_per_image.size(), dtype=torch.uint8,
+                layout=matched_idxs_per_image.layout, device=matched_idxs_per_image.device)
+            neg_idx_per_image_mask = torch.zeros(
+                matched_idxs_per_image.size(), dtype=torch.uint8,
+                layout=matched_idxs_per_image.layout, device=matched_idxs_per_image.device)
 
             pos_idx_per_image_mask[pos_idx_per_image] = torch.tensor(1, dtype=torch.uint8)
             neg_idx_per_image_mask[neg_idx_per_image] = torch.tensor(1, dtype=torch.uint8)
