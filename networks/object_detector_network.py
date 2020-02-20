@@ -1,6 +1,8 @@
 import math
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+# from torchvision.models.detection import fasterrcnn_resnet50_fpn
+from .detection.faster_rcnn import fasterrcnn_resnet50_fpn
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']
 
@@ -177,6 +179,9 @@ def Object_Detector(opt=None):
         model = resnet101(opt, weight_dir)
     elif opt.object_base_model == 'resnet152':
         model = resnet152(opt, weight_dir)
+    elif opt.object_base_model == 'fasterrcnn_resnet50_fpn':
+        model = fasterrcnn_resnet50_fpn(pretrained=True)
+        model.eval()
     else:
         print('Error, no such model')
 

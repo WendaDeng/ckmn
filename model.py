@@ -3,6 +3,7 @@ from networks import model_ob
 from networks import model_ac
 from networks import model_scob
 from networks import model_3detectors
+from networks import model_3detectors_graph
 from networks import model_3detectors_nonlocal
 from networks import model_3detectors_dilated
 from networks import model_3detectors_dilated_nonlocal
@@ -17,14 +18,14 @@ def generate_model(opt):
 
     if opt.model_name == 'FtDetectorFc-3detectors':
         model = model_3detectors.Event_Model(opt)
-      
+
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
-        
+
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-       
+
         # scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
         temp_scratch = []
@@ -48,6 +49,45 @@ def generate_model(opt):
             else:
                 v.requires_grad = False
         temp = temp_fc + temp_scratch
+        parameters.append({'params': temp_conv})
+        parameters.append({'params': temp})
+
+    elif opt.model_name == 'FtDetectorFc-3detectors-Graph':
+        model = model_3detectors_graph.Event_Model(opt)
+
+        conv_ft_module_names = 'layer4.2.conv3'
+        temp_conv = []
+
+        detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
+        action_detectors_ft_module_names = 'action_detector.logits'
+        temp_fc = []
+
+        # scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
+        scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
+        temp_scratch = []
+
+        graph_weight = 'gcn'
+        temp_graph = []
+
+        parameters = []
+        for k, v in model.named_parameters():
+            if conv_ft_module_names in k:
+                print('a', k)
+                temp_conv.append(v)
+
+            elif action_detectors_ft_module_names in k:
+                print('b', k)
+                temp_fc.append(v)
+            elif k[:-5] in detectors_ft_module_names or k[:-7] in detectors_ft_module_names:
+                print('b', k)
+                temp_fc.append(v)
+
+            elif k[:-5] in scratch_train_module_names or k[:-7] in scratch_train_module_names:
+                print('c', k)
+                temp_scratch.append(v)
+            else:
+                v.requires_grad = False
+        temp = temp_fc + temp_scratch + temp_graph
         parameters.append({'params': temp_conv})
         parameters.append({'params': temp})
 

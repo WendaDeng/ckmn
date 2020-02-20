@@ -80,12 +80,11 @@ class Event_Model(nn.Module):
         action_feature = action_feature.view(N, T, -1)
         
         ## max pooling
-        # N T F -> N F
         scene_feature, _ = torch.max(scene_feature, dim=1)
         object_feature, _ = torch.max(object_feature, dim=1)
         action_feature, _ = torch.max(action_feature, dim=1)
 
-        ## concat & classification  size: (N self.concept_number)
+        ## concat & classification
         classification = torch.cat((torch.cat((scene_feature, object_feature), 1), action_feature), 1)
         del scene_feature, object_feature, action_feature
 

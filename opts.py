@@ -80,12 +80,12 @@ def parse_opts():
         '--object_base_model',
         default='resnet50',
         type=str,
-        help='concept detector base model (resnet50 | resnet101)')
+        help='concept detector base model (resnet50 | resnet101 | fasterrcnn_resnet50_fpn)')
     parser.add_argument(
         '--action_base_model',
         default='I3D',
         type=str,
-        help='concept detector base model (resnet50 | resnet101 | resnext101)')
+        help='concept detector base model (resnet50 | resnet101 | resnext101 | I3D)')
     parser.add_argument(
         '--general_base_model',
         # default='resnext101',
