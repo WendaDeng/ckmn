@@ -226,6 +226,17 @@ def _onnx_heatmaps_to_keypoints_loop(maps, rois, widths_ceil, heights_ceil,
     return xy_preds, end_scores
 
 
+# workaround for issue pytorch 27512
+def tensor_floordiv(tensor, int_div):
+    # type: (Tensor, int)
+    result = tensor / int_div
+    # TODO: https://github.com/pytorch/pytorch/issues/26731
+    floating_point_types = (torch.float, torch.double, torch.half)
+    if result.dtype in floating_point_types:
+        result = result.trunc()
+    return result
+
+
 def heatmaps_to_keypoints(maps, rois):
     """Extract predicted keypoint locations from heatmaps. Output has shape
     (#rois, 4, #keypoints) with the 4 rows corresponding to (x, y, logit, prob)
@@ -269,7 +280,7 @@ def heatmaps_to_keypoints(maps, rois):
         pos = roi_map.reshape(num_keypoints, -1).argmax(dim=1)
 
         x_int = pos % w
-        y_int = (pos - x_int) // w
+        y_int = tensor_floordiv((pos - x_int), w)
         # assert (roi_map_probs[k, y_int, x_int] ==
         #         roi_map_probs[k, :, :].max())
         x = (x_int.float() + 0.5) * width_correction
@@ -668,8 +679,14 @@ class RoIHeads(torch.nn.Module):
         pred_scores = F.softmax(class_logits, -1)
 
         # split boxes and scores per image
-        pred_boxes_list = pred_boxes.split(boxes_per_image, 0)
-        pred_scores_list = pred_scores.split(boxes_per_image, 0)
+        if len(boxes_per_image) == 1:
+            # TODO : remove this when ONNX support dynamic split sizes
+            # and just assign to pred_boxes instead of pred_boxes_list
+            pred_boxes_list = [pred_boxes]
+            pred_scores_list = [pred_scores]
+        else:
+            pred_boxes_list = pred_boxes.split(boxes_per_image, 0)
+            pred_scores_list = pred_scores.split(boxes_per_image, 0)
 
         all_boxes = []
         all_scores = []
@@ -714,8 +731,10 @@ class RoIHeads(torch.nn.Module):
     def get_box_features(self, features, boxes, image_shapes):
         box_features = self.box_roi_pool(features, boxes, image_shapes)
         box_features = self.box_head(box_features)
+
         boxes_per_image = [len(boxes_in_image) for boxes_in_image in boxes]
-        # split boxes per image
+         # split boxes per image
+
         box_features_list = box_features.split(boxes_per_image, 0)
 
         return box_features_list
@@ -770,7 +789,7 @@ class RoIHeads(torch.nn.Module):
                         "boxes": boxes[i],
                         "labels": labels[i],
                         "scores": scores[i],
-                        "boxes_feature": box_features_list[i]
+                        "boxes_feature": box_features_list[i],
                     }
                 )
 
