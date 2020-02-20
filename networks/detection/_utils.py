@@ -15,7 +15,7 @@ import torchvision
 #                             device=tensor.device, pin_memory=tensor.is_pinned())
 
 
-@torch.jit.script
+# @torch.jit.script
 # class BalancedPositiveNegativeSampler(object):
 #     """
 #     This class samples batches, ensuring that they contain a fixed proportion of positives
