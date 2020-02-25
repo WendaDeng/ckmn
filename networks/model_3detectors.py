@@ -73,7 +73,7 @@ class Event_Model(nn.Module):
         ## action frame inpupt size N T C D aH aW
         # N T C D aH aW ->  NT C D aH aW
         action_frame = action_frame.view(-1, C, D, aH, aW)
-        # NT C D H W ->  NT F
+        # NT C D aH aW ->  NT F
         action_feature = self.action_detector(action_frame)
         del action_frame
         # NT F -> N T F

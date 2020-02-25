@@ -46,7 +46,7 @@ class Event_Model(nn.Module):
         # NT F -> N T F
         action_feature = action_feature.view(N, T, -1)
         
-        ## max pooling
+        ## max pooling N T F -> N F
         action_feature, _ = torch.max(action_feature, dim=1)
 
         ## concat & classification
