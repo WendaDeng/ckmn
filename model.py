@@ -93,13 +93,13 @@ def generate_model(opt):
 
     elif opt.model_name == 'FtDetectorFc-Sc':
         model = model_sc.Event_Model(opt)
-      
+
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
-        
+
         detectors_ft_module_names = ['scene_detector.fc']
         temp_fc = []
-       
+
         scratch_train_module_names = ['final_classifier']
         temp_scratch = []
 
@@ -124,13 +124,13 @@ def generate_model(opt):
 
     elif opt.model_name == 'FtDetectorFc-Ob':
         model = model_ob.Event_Model(opt)
-      
+
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
-        
+
         detectors_ft_module_names = ['object_detector.fc']
         temp_fc = []
-       
+
         scratch_train_module_names = ['final_classifier']
         temp_scratch = []
 
@@ -155,14 +155,14 @@ def generate_model(opt):
 
     elif opt.model_name == 'FtDetectorFc-Ac':
         model = model_ac.Event_Model(opt)
-      
+
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
-        
+
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-       
-        scratch_train_module_names = ['final_classifier']
+
+        scratch_train_module_names = ['final_classifier', 'fc_verb', 'fc_noun']
         temp_scratch = []
 
         parameters = []
@@ -186,13 +186,13 @@ def generate_model(opt):
 
     elif opt.model_name == 'FtDetectorFc-Scob':
         model = model_scob.Event_Model(opt)
-      
+
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
-        
+
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         temp_fc = []
-       
+
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         temp_scratch = []
 
@@ -224,15 +224,15 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
-        attention_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac', 
-                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac', 
+
+        attention_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac',
+                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac',
                            'Ws_ob_ac', 'Whv_ob_ac', 'Whs_ob_ac']
         temp_att = []
- 
+
         #bn_weight =['scene_coattention_bn1', 'object_coattention_bn1', 'action_coattention_bn1', 'concat_bn1', 'final_bn1']
         #temp_bn = []
-     
+
         #scratch_train_module_names = ['scene_reduce_dim', 'object_reduce_dim','action_reduce_dim', 'concat_reduce_dim', 'final_classifier']
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         temp_scratch = []
@@ -277,10 +277,10 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
+
         attention_weight = 'nonlocal'
         temp_att = []
-      
+
         #scratch_train_module_names = ['scene_reduce_dim', 'object_reduce_dim','action_reduce_dim', 'concat_reduce_dim', 'final_classifier']
         scratch_train_module_names = ['concat_bn1', 'concat_reduce_dim', 'final_bn1', 'final_classifier']
         #scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
@@ -321,10 +321,10 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
+
         dilated_weight = 'dilated'
         temp_att = []
-      
+
         #scratch_train_module_names = ['scene_reduce_dim', 'object_reduce_dim','action_reduce_dim', 'concat_reduce_dim', 'final_classifier']
         #scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         scratch_train_module_names = ['concat_bn1', 'concat_reduce_dim', 'final_bn1', 'final_classifier']
@@ -365,11 +365,11 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
+
         dilated_weight = 'dilated'
         attention_weight = 'nonlocal'
         temp_att = []
-      
+
         #scratch_train_module_names = ['scene_reduce_dim', 'object_reduce_dim','action_reduce_dim', 'concat_reduce_dim', 'final_classifier']
         #scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         #scratch_train_module_names = ['concat_bn1', 'concat_reduce_dim', 'final_bn1', 'final_classifier']
@@ -414,11 +414,11 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
+
         dilated_weight = 'dilated'
         attention_weight = 'nonlocal'
         temp_att = []
-      
+
         #scratch_train_module_names = ['scene_reduce_dim', 'object_reduce_dim','action_reduce_dim', 'concat_reduce_dim', 'final_classifier']
         #scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         scratch_train_module_names = ['concat_bn1', 'concat_reduce_dim', 'final_bn1', 'final_classifier']
@@ -462,19 +462,19 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
-        coatt_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac', 
-                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac', 
+
+        coatt_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac',
+                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac',
                            'Ws_ob_ac', 'Whv_ob_ac', 'Whs_ob_ac']
         temp_coatt = []
- 
+
         dilated_weight = 'dilated'
         nonlocal_weight = 'nonlocal'
         temp_dnl = []
-        
+
         bn_weight =['scene_dilated_bn1', 'object_dilated_bn1', 'action_dilated_bn1', 'scene_nonlocal_bn1', 'object_nonlocal_bn1', 'action_nonlocal_bn1', 'concat_bn1', 'final_bn1']
         temp_bn = []
-     
+
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         temp_scratch = []
 
@@ -525,20 +525,20 @@ def generate_model(opt):
         detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
-        coatt_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac', 
-                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac', 
+
+        coatt_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac',
+                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac',
                            'Ws_ob_ac', 'Whv_ob_ac', 'Whs_ob_ac']
         temp_coatt = []
- 
+
         dilated_weight = 'dilated'
         nonlocal_weight = 'nonlocal'
         temp_dnl = []
-        
+
         bn_weight =['scene_dilated_bn1', 'object_dilated_bn1', 'action_dilated_bn1', 'scene_nonlocal_bn1', 'object_nonlocal_bn1', 'action_nonlocal_bn1', 'dilatednonlocal_redudim_bn1', 'coattention_redudim_bn1', 'final_bn1']
         # bn_weight =['scene_dilated_bn1', 'object_dilated_bn1', 'action_dilated_bn1', 'scene_nonlocal_bn1', 'object_nonlocal_bn1', 'action_nonlocal_bn1', 'concat_bn1', 'final_bn1']
         temp_bn = []
-     
+
         scratch_train_module_names = ['dilatednonlocal_reduce_dim', 'coattention_reduce_dim', 'final_classifier']
         # scratch_train_module_names = ['dilatednonlocal_reduce_dim', 'coattention_reduce_dim', 'concat_reduce_dim', 'final_classifier']
         temp_scratch = []
@@ -590,19 +590,19 @@ def generate_model(opt):
         #detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
         #action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
-        
-        coatt_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac', 
-                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac', 
+
+        coatt_weight = ['Wb_sc_ob', 'Wv_sc_ob', 'Ws_sc_ob', 'Whv_sc_ob', 'Whs_sc_ob', 'Wb_sc_ac',
+                           'Wv_sc_ac', 'Ws_sc_ac', 'Whv_sc_ac', 'Whs_sc_ac', 'Wb_ob_ac', 'Wv_ob_ac',
                            'Ws_ob_ac', 'Whv_ob_ac', 'Whs_ob_ac']
         temp_coatt = []
- 
+
         dilated_weight = 'dilated'
         nonlocal_weight = 'nonlocal'
         temp_dnl = []
-        
+
         bn_weight =['scene_dilated_bn1', 'object_dilated_bn1', 'action_dilated_bn1', 'scene_nonlocal_bn1', 'object_nonlocal_bn1', 'action_nonlocal_bn1', 'final_bn1']
         temp_bn = []
-     
+
         scratch_train_module_names = ['dilatednonlocal_bilinear', 'coattention_bilinear', 'final_classifier']
         temp_scratch = []
 

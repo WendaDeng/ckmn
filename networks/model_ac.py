@@ -15,9 +15,10 @@ class Event_Model(nn.Module):
     def __init__(self, opt):
         super(Event_Model, self).__init__()
 
+        self.num_class = opt.event_classes
         self.action_detector = action_detector_network.Action_Detector(opt)
-	
-        self.final_classifier = nn.Linear(opt.action_classes, opt.event_classes)
+        self._add_classification_layer(opt.action_classes)
+        # self.final_classifier = nn.Linear(opt.action_classes, opt.event_classes)
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU(inplace=True)
 
@@ -33,7 +34,15 @@ class Event_Model(nn.Module):
                 nn.init.constant_(l.bias, 0)
 
 
-    def forward(self, sceobj_frame, action_frame):
+    def _add_classification_layer(self, input_dim):
+        if isinstance(self.num_class, (list, tuple)):  # Multi-task
+            self.fc_verb = nn.Linear(input_dim, self.num_class[0])
+            self.fc_noun = nn.Linear(input_dim, self.num_class[1])
+        else:
+            self.final_classifier = nn.Linear(input_dim, self.num_class)
+
+
+    def forward(self, action_frame):
 
         N, T, D, C, aH, aW = action_frame.size()
 
@@ -45,13 +54,22 @@ class Event_Model(nn.Module):
         del action_frame
         # NT F -> N T F
         action_feature = action_feature.view(N, T, -1)
-        
+
         ## max pooling N T F -> N F
         action_feature, _ = torch.max(action_feature, dim=1)
 
         ## concat & classification
         classification = self.relu(action_feature)
         classification = self.dropout(classification)
-        classification = self.final_classifier(classification)
+        if isinstance(self.num_class, (list, tuple)):  # Multi-task
+            # Verb
+            base_out_verb = self.fc_verb(classification)
 
-        return classification
+            # Noun
+            base_out_noun = self.fc_noun(classification)
+
+            output = (base_out_verb, base_out_noun)
+        else:
+            output = self.final_classifier(classification)
+
+        return output

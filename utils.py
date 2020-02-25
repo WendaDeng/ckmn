@@ -91,7 +91,7 @@ def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     maxk = max(topk)
     batch_size = target.size(0)
-    target = (target == 1.0).nonzero().t()[1]
+    # target = (target == 1.0).nonzero().t()[1]
 
     _, pred = output.topk(maxk, 1, True, True)
     pred = pred.t()
@@ -125,7 +125,7 @@ def multitask_accuracy(outputs, labels, topk=(1,)):
         all_correct = all_correct.cuda()
     for output, label in zip(outputs, labels):
         # make label from [batch_size, class_count] to [batch_size]
-        label = (label == 1.0).nonzero().t()[1]
+        # label = (label == 1.0).nonzero().t()[1]
         _, max_k_idx = output.topk(max_k, dim=1, largest=True, sorted=True)
         # Flip batch_size, class_count as .view doesn't work on non-contiguous
         max_k_idx = max_k_idx.t()
