@@ -240,12 +240,12 @@ if __name__ == '__main__':
     #val_epoch(opt.begin_epoch, val_loader, model, opt, val_logger, writer)
 
     ## scheduler one
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
+    # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
 
     ## scheduler two
-    #scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
+    scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
     #scheduler_cosine = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
-    #scheduler = GradualWarmupScheduler(optimizer, multiplier=100, total_epoch=4, after_scheduler=scheduler_cosine)
+    scheduler = GradualWarmupScheduler(optimizer, multiplier=100, total_epoch=4, after_scheduler=scheduler_cosine)
     #scheduler = GradualWarmupScheduler(optimizer, multiplier=1000, total_epoch=6, after_scheduler=scheduler_cosine)
 
     stats_dict = dict(train_loss=np.zeros((opt.n_epochs+1,)),
