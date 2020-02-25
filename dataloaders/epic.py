@@ -72,10 +72,13 @@ def get_default_video_loader():
 def load_annotation_data(data_file_path):
 	labels = pd.read_pickle(data_file_path)
 	data = []
+	j = 0
 	for i, row in labels.iterrows():
-		metadata = row.to_dict()
-		metadata['uid'] = i
-		data.append(metadata)
+		if j % 5 == 0:
+			metadata = row.to_dict()
+			metadata['uid'] = i
+			data.append(metadata)
+		j += 1
 	return data
 
 
