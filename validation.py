@@ -41,7 +41,7 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, writer):
             # all_targets.append(targets)
 
             inputs = inputs.to(opt.device)
-            
+
             outputs = model(inputs)
             batch_size = inputs.size(0)
             # classification_results_final.append(outputs.cpu().data)
@@ -55,11 +55,13 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, writer):
 
                 verb_output = outputs[0]
                 noun_output = outputs[1]
-                verb_prec1, verb_prec5 = my_accuracy(outputs[0].cpu().data, target['verb'].cpu().data, topk=(1, 5))
+                verb_prec1, verb_prec5 = accuracy(outputs[0], target['verb'], topk=(1, 5))
+                # verb_prec1, verb_prec5 = my_accuracy(outputs[0].cpu().data, target['verb'].cpu().data, topk=(1, 5))
                 verb_top1.update(verb_prec1, batch_size)
                 verb_top5.update(verb_prec5, batch_size)
 
-                noun_prec1, noun_prec5 = my_accuracy(outputs[1].cpu().data, target['noun'].cpu().data, topk=(1, 5))
+                noun_prec1, noun_prec5 = accuracy(outputs[1], target['noun'], topk=(1, 5))
+                # noun_prec1, noun_prec5 = my_accuracy(outputs[1].cpu().data, target['noun'].cpu().data, topk=(1, 5))
                 noun_top1.update(noun_prec1, batch_size)
                 noun_top5.update(noun_prec5, batch_size)
 
@@ -70,7 +72,8 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, writer):
                 targets = targets.to(opt.device)
                 loss = criterion(outputs, targets)
                 # measure accuracy and record loss
-                prec1, prec5 = my_accuracy(outputs.cpu().data, targets.cpu().data, topk=(1, 5))
+                prec1, prec5 = accuracy(outputs, targets, topk=(1, 5))
+                # prec1, prec5 = my_accuracy(outputs.cpu().data, targets.cpu().data, topk=(1, 5))
 
             losses.update(loss.item(), batch_size)
             top1.update(prec1, batch_size)

@@ -116,9 +116,10 @@ def make_dataset(root_path, video_path, annotation_path, class_num):
 			'frame_indices': frame_indices
 		}
 		# ipdb.set_trace()
-		verb_label, noun_label = np.zeros(class_num[0]), np.zeros(class_num[1])
-		verb_label[int(annotations[i]['verb_class'])] = 1
-		noun_label[int(annotations[i]['noun_class'])] = 1
+		verb_label, noun_label = int(annotations[i]['verb_class']), int(annotations[i]['noun_class'])
+		# verb_label, noun_label = np.zeros(class_num[0]), np.zeros(class_num[1])
+		# verb_label[int(annotations[i]['verb_class'])] = 1
+		# noun_label[int(annotations[i]['noun_class'])] = 1
 
 		sample['label'] = {'verb': verb_label, 'noun': noun_label}
 

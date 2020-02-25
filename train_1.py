@@ -62,11 +62,13 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
             verb_output = outputs[0]
             noun_output = outputs[1]
-            verb_prec1, verb_prec5 = my_accuracy(outputs[0].cpu().data, target['verb'].cpu().data, topk=(1, 5))
+            verb_prec1, verb_prec5 = accuracy(outputs[0], target['verb'], topk=(1,5))
+            # verb_prec1, verb_prec5 = my_accuracy(outputs[0].cpu().data, target['verb'].cpu().data, topk=(1, 5))
             verb_top1.update(verb_prec1, batch_size)
             verb_top5.update(verb_prec5, batch_size)
 
-            noun_prec1, noun_prec5 = my_accuracy(outputs[1].cpu().data, target['noun'].cpu().data, topk=(1, 5))
+            noun_prec1, noun_prec5 = accuracy(outputs[1], target['noun'], topk=(1,5))
+            # noun_prec1, noun_prec5 = my_accuracy(outputs[1].cpu().data, target['noun'].cpu().data, topk=(1, 5))
             noun_top1.update(noun_prec1, batch_size)
             noun_top5.update(noun_prec5, batch_size)
 
@@ -76,7 +78,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         else:
             targets = targets.to(opt.device)
             loss = criterion(outputs, targets)
-            prec1, prec5 = my_accuracy(outputs.cpu().data, targets.cpu().data, topk=(1, 5))
+            prec1, prec5 = accuracy(outputs, targets, topk=(1,5))
 
         top1.update(prec1, inputs.size(0))
         top5.update(prec5, inputs.size(0))

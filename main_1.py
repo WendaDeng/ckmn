@@ -92,21 +92,21 @@ if __name__ == '__main__':
         'runs',
         socket.gethostname())
     writer = SummaryWriter(log_dir=log_dir, comment='-params')
-    
+
     # model and criterion
     model, parameters = generate_model(opt)
-    # criterion = nn.CrossEntropyLoss()
-    criterion = nn.MultiLabelSoftMarginLoss()
+    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.MultiLabelSoftMarginLoss()
 
     # set cuda
     if not opt.no_cuda:
        os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu_ids
        torch.cuda.manual_seed(opt.manual_seed)
-    
+
     opt.device = torch.device("cuda" if not opt.no_cuda else "cpu")
     criterion = criterion.to(opt.device)
     model = model.to(opt.device)
-    
+
     #model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
     if opt.ngpus > 1:
         model = torch.nn.DataParallel(model)
@@ -132,7 +132,12 @@ if __name__ == '__main__':
             parameters,
             lr=opt.learning_rate,
             betas=(0.9, 0.999),
-            eps=1e-8,
+            # eps=1e-8,
+            eps=3e-4,
+            weight_decay=opt.weight_decay)
+    elif opt.optimizer == 'adadelta':
+        optimizer = optim.Adadelta(
+            parameters,
             weight_decay=opt.weight_decay)
     elif opt.optimizer == 'radam':
         optimizer = RAdam(
@@ -229,14 +234,14 @@ if __name__ == '__main__':
         #if not opt.no_train:
         #    optimizer.load_state_dict(checkpoint['optimizer'])
         del checkpoint
-    
+
     # train and validation
-    
+
     #val_epoch(opt.begin_epoch, val_loader, model, opt, val_logger, writer)
 
     ## scheduler one
     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
-    
+
     ## scheduler two
     #scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
     #scheduler_cosine = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
@@ -281,7 +286,7 @@ if __name__ == '__main__':
                 stats_dict[k][i] = v
 
         scheduler.step()
-    
+
     writer.close()
 
     save_stats_dir = os.path.join(opt.save_path, 'stats')
