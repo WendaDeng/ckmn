@@ -138,6 +138,7 @@ if __name__ == '__main__':
     elif opt.optimizer == 'adadelta':
         optimizer = optim.Adadelta(
             parameters,
+            lr=opt.learning_rate,
             weight_decay=opt.weight_decay)
     elif opt.optimizer == 'radam':
         optimizer = RAdam(
@@ -240,13 +241,19 @@ if __name__ == '__main__':
     #val_epoch(opt.begin_epoch, val_loader, model, opt, val_logger, writer)
 
     ## scheduler one
-    # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
-
+    if opt.scheduler == 'multistep':
+        scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
+    elif opt.scheduler == 'plateau':
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=opt.lr_decay, patience=opt.lr_patience, threshold=opt.plateau_thres)
+    elif opt.scheduler == 'step':
+        scheduler = lr_scheduler.StepLR(optimizer, step_size=opt.lr_decay_step, gamma=opt.lr_decay)
     ## scheduler two
-    scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
-    #scheduler_cosine = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
-    scheduler = GradualWarmupScheduler(optimizer, multiplier=100, total_epoch=4, after_scheduler=scheduler_cosine)
-    #scheduler = GradualWarmupScheduler(optimizer, multiplier=1000, total_epoch=6, after_scheduler=scheduler_cosine)
+    elif opt.seceduler == 'warmup-cosine':
+        scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
+        scheduler = GradualWarmupScheduler(optimizer, multiplier=opt.warmup_multiplier, total_epoch=opt.warmup_epoch, after_scheduler=scheduler_cosine)
+    elif opt.seceduler == 'warmup-multistep':
+        scheduler_cosine = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
+        scheduler = GradualWarmupScheduler(optimizer, multiplier=opt.warmup_multiplier, total_epoch=opt.warmup_epoch, after_scheduler=scheduler_cosine)
 
     stats_dict = dict(train_loss=np.zeros((opt.n_epochs+1,)),
                       train_verb_loss=np.zeros((opt.n_epochs+1,)),
@@ -285,7 +292,10 @@ if __name__ == '__main__':
             for k, v in test_metrics.items():
                 stats_dict[k][i] = v
 
-        scheduler.step()
+        if type(scheduler) == lr_scheduler.ReduceLROnPlateau
+            scheduler.step(training_metrics['train_loss'])
+        else:
+            scheduler.step()
 
     writer.close()
 

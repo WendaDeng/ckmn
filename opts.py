@@ -186,6 +186,11 @@ def parse_opts():
         help='If true, validation is not performed.')
     parser.set_defaults(no_val=False)
     parser.add_argument(
+        '--scheduler',
+        default='warmup-cosine',
+        type=str,
+        help='multistep | plateau | step | warmup-cosine | warmup-multistep)'
+    parser.add_argument(
         '--learning_rate',
         default=0.1,
         type=float,
@@ -217,8 +222,15 @@ def parse_opts():
         '--lr_patience',
         default=10,
         type=int,
-        help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.'
-    )
+        help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.')
+    parser.add_argument(
+        '--platueau_thres', default=0.01, type=float, help='threshold of LR scheduler, See documentation of ReduceLROnPlateau.')
+    parser.add_argument(
+        '--lr_decay_step', default=15, type=int, help='step_size of StepLR scheduler')
+    parser.add_argument(
+        '--warmup_multiplier', default=100, type=int, help='multiplier of warmup scheduler')
+    parser.add_argument(
+        '--warmup_epoch', default=5, type=int, help='warmup epochs')
     parser.add_argument(
         '--n_epochs',
         default=100,
@@ -228,8 +240,7 @@ def parse_opts():
         '--begin_epoch',
         default=1,
         type=int,
-        help='Training begins at this epoch. Previous trained model indicated by resume_path is loaded.'
-    )
+        help='Training begins at this epoch. Previous trained model indicated by resume_path is loaded.')
     parser.add_argument(
         '--val_per_epoches',
         default=4,
