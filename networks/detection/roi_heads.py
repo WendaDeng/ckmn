@@ -519,6 +519,17 @@ class RoIHeads(torch.nn.Module):
 
         return all_boxes, all_scores, all_labels
 
+    def get_box_features(self, features, boxes, image_shapes):
+        box_features = self.box_roi_pool(features, boxes, image_shapes)
+        box_features = self.box_head(box_features)
+
+        boxes_per_image = [len(boxes_in_image) for boxes_in_image in boxes]
+         # split boxes per image
+
+        box_features_list = box_features.split(boxes_per_image, 0)
+
+        return box_features_list
+
     def forward(self, features, proposals, image_shapes, targets=None):
         """
         Arguments:
@@ -548,6 +559,8 @@ class RoIHeads(torch.nn.Module):
             losses = dict(loss_classifier=loss_classifier, loss_box_reg=loss_box_reg)
         else:
             boxes, scores, labels = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes)
+            # get features of every predict boxes
+            boxes_feature_list = self.get_box_features(features, boxes, image_shapes)
             num_images = len(boxes)
             for i in range(num_images):
                 result.append(
@@ -555,6 +568,7 @@ class RoIHeads(torch.nn.Module):
                         boxes=boxes[i],
                         labels=labels[i],
                         scores=scores[i],
+                        boxes_feature=boxes_feature_list[i],
                     )
                 )
 
