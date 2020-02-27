@@ -189,7 +189,7 @@ def parse_opts():
         '--scheduler',
         default='warmup-cosine',
         type=str,
-        help='multistep | plateau | step | warmup-cosine | warmup-multistep)'
+        help='multistep | plateau | step | warmup-cosine | warmup-multistep')
     parser.add_argument(
         '--learning_rate',
         default=0.1,
@@ -224,7 +224,7 @@ def parse_opts():
         type=int,
         help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.')
     parser.add_argument(
-        '--platueau_thres', default=0.01, type=float, help='threshold of LR scheduler, See documentation of ReduceLROnPlateau.')
+        '--plateau_thres', default=0.01, type=float, help='threshold of LR scheduler, See documentation of ReduceLROnPlateau.')
     parser.add_argument(
         '--lr_decay_step', default=15, type=int, help='step_size of StepLR scheduler')
     parser.add_argument(

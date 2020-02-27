@@ -248,10 +248,10 @@ if __name__ == '__main__':
     elif opt.scheduler == 'step':
         scheduler = lr_scheduler.StepLR(optimizer, step_size=opt.lr_decay_step, gamma=opt.lr_decay)
     ## scheduler two
-    elif opt.seceduler == 'warmup-cosine':
+    elif opt.scheduler == 'warmup-cosine':
         scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
         scheduler = GradualWarmupScheduler(optimizer, multiplier=opt.warmup_multiplier, total_epoch=opt.warmup_epoch, after_scheduler=scheduler_cosine)
-    elif opt.seceduler == 'warmup-multistep':
+    elif opt.scheduler == 'warmup-multistep':
         scheduler_cosine = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
         scheduler = GradualWarmupScheduler(optimizer, multiplier=opt.warmup_multiplier, total_epoch=opt.warmup_epoch, after_scheduler=scheduler_cosine)
 
@@ -292,7 +292,7 @@ if __name__ == '__main__':
             for k, v in test_metrics.items():
                 stats_dict[k][i] = v
 
-        if type(scheduler) == lr_scheduler.ReduceLROnPlateau
+        if type(scheduler) == lr_scheduler.ReduceLROnPlateau:
             scheduler.step(training_metrics['train_loss'])
         else:
             scheduler.step()
