@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+from torchvision.models._utils import IntermediateLayerGetter
 
 import os
 import sys
@@ -704,6 +705,26 @@ def I3D(opt=None, weight_dir=None):
 
     return model
 
+class Backbone(nn.Sequential):
+    """
+    Internally, it uses torchvision.models._utils.IntermediateLayerGetter to
+    extract a submodel that returns the feature maps specified in return_layers.
+    The same limitations of IntermediatLayerGetter apply here.
+
+    Arguments:
+        backbone (nn.Module)
+        return_layers (Dict[name, new_name]): a dict containing the names
+            of the modules for which the activations will be returned as
+            the key of the dict, and the value of the dict is the name
+            of the returned activation (which the user can specify).
+    """
+    def __init__(self, backbone, return_layers, out_channels):
+        body = IntermediateLayerGetter(backbone, return_layers=return_layers)
+        super(Backbone, self).__init__(OrderedDict(
+            [("body", body)]))
+        self.out_channels = out_channels
+
+
 def Action_Detector(opt=None):
     if opt.action_base_model == 'resnet50':
         weight_dir = '../weights/resnet-50-kinetics.pth'
@@ -717,6 +738,10 @@ def Action_Detector(opt=None):
     elif opt.action_base_model == 'I3D':
         weight_dir = '../weights/rgb_imagenet.pt'
         model = I3D(opt, weight_dir)
+        # return_layers = {'Mixed_4b': 0, 'Mixed_4c': 1, 'Mixed_4d': 2, 'Mixed_4e': 3,
+        #                  'Mixed_4f': 4, 'Mixed_5b': 5, 'Mixed_5c': 6}
+        # out_channels = 256
+        # return Backbone(model, return_layers, out_channels)
     else:
         print('Error, no such model')
 

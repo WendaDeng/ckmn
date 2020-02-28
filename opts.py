@@ -259,6 +259,11 @@ def parse_opts():
         type=int,
         help='Number of threads for multi-thread loading')
     parser.add_argument(
+        '--objects_per_frame',
+        default=4,
+        type=int,
+        help='Number of objects to use every frame')
+    parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
 
     args = parser.parse_args()

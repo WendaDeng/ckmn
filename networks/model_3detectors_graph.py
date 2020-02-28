@@ -18,8 +18,9 @@ class Event_Model(nn.Module):
         self.concept_number = opt.scene_classes + opt.object_classes + opt.action_classes
         self.latent_dimension = 512
         self.num_class = opt.event_classes
+        self.objects_per_frame = opt.objects_per_frame
 
-        self.scene_detector = scene_detector_network.Scene_Detector(opt)
+        # self.scene_detector = scene_detector_network.Scene_Detector(opt)
         self.object_detector = object_detector_network.Object_Detector(opt)
         self.action_detector = action_detector_network.Action_Detector(opt)
 	
@@ -49,44 +50,75 @@ class Event_Model(nn.Module):
             self.final_classifier = nn.Linear(input_dim, self.num_class)
 
 
-    def forward(self, sceobj_frame):
+    def postprocess_detection_results(self, detections, batch_size, segment_num, frame_num):
+        # detections: List[Dict] len: batch_size * segment_num * frame_num
+        detction_split = [detections[i * frame_num, (i+1) * frame_num] for i in range(batch_size * segment_num)]
+
+        boxes, boxes_features = [], []
+
+        # len of detection_split: batch_size * segment_num
+        for preds in detction_split:
+            boxes_per_segment = []
+            boxes_features_per_segment = []
+
+            # len of preds: frame_num; pred is a dict
+            for pred in preds:
+                boxes_per_segment.append(pred['boexs'][:self.objects_per_frame])
+                boxes_features_per_segment.append(pred['boxes_feature'][:self.objects_per_frame])
+
+            boxes_per_segment = torch.cat(boxes_per_segment)
+            boxes_features_per_segment = torch.cat(boxes_features_per_segment)
+
+            boxes.append(boxes_per_segment)
+            boxes_features.append(boxes_features_per_segment)
+
+        # dim: [batch_size * segment_num, frame_num * self.objects_per_frame, 1024]
+        boxes_features = torch.stack(boxes_features)
+
+        return  boxes, boxes_features
+
+
+
+    def forward(self, obj_frame):
         
-        action_frame = sceobj_frame.permute(0, 1, 3, 2, 4, 5)
+        action_frame = obj_frame.permute(0, 1, 3, 2, 4, 5)
         # N: batch size;    T: segment number;  D: sample duration
-        N, T, D, C, H, W = sceobj_frame.size()
+        N, T, D, C, H, W = obj_frame.size()
         _, _, _, _, aH, aW = action_frame.size()
 
-        ## scene and object frame input size N T D C H W
         # N T D C H W -> NTD C H W
-        sceobj_frame = sceobj_frame.view(-1, C, H, W)
-        # NTD C H W -> NTD F
-        scene_feature = self.scene_detector(sceobj_frame)
-        object_feature = self.object_detector(sceobj_frame)
-        del sceobj_frame
-        # NTD F -> N T D F
-        scene_feature = scene_feature.view(N, T, D, -1)
-        object_feature = object_feature.view(N, T, D, -1)
-        # N T D F -> N T F
-        scene_feature, _ = torch.max(scene_feature, dim=2)
-        object_feature, _ = torch.max(object_feature, dim=2)
+        obj_frame = obj_frame.view(-1, C, H, W)
+        # NTD C H W -> NTD (List[Dict])
+        detection_results = self.object_detector(obj_frame)
+        # features: NTD -> NT 4D F(1024)
+        object_boxes, object_features = self.postprocess_detection_results(detection_results, N, T, D)
+
+        # NT 4D F(1024) -> N T 4D F(1024)
+        seg_nums, obj_nums, feat_dim = object_features.shape
+        object_features =  object_features.view(N, T, -1, feat_dim)
+        # N T 4D F(1024) -> N T F(1024)
+        object_feature, _ = torch.max(object_features, dim=2)
+        # object_feature = torch.mean(object_features, dim=2)
+
 
         ## action frame inpupt size N T C D aH aW
         # N T C D aH aW ->  NT C D aH aW
         action_frame = action_frame.view(-1, C, D, aH, aW)
         # NT C D H W ->  NT F
         action_feature = self.action_detector(action_frame)
-        del action_frame
         # NT F -> N T F
         action_feature = action_feature.view(N, T, -1)
+        # todo: use object proposals to extract feature
+
         
-        ## max pooling
-        scene_feature, _ = torch.max(scene_feature, dim=1)
+        ## max pooling N T F -> N F
         object_feature, _ = torch.max(object_feature, dim=1)
         action_feature, _ = torch.max(action_feature, dim=1)
 
+        del obj_frame, action_frame
         ## concat & classification
-        classification = torch.cat((torch.cat((scene_feature, object_feature), 1), action_feature), 1)
-        del scene_feature, object_feature, action_feature
+        classification = torch.cat((object_feature, action_feature), 1)
+        del object_feature, action_feature
 
         classification = self.relu(classification)
         classification = self.dropout(classification)
