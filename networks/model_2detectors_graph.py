@@ -8,6 +8,7 @@ import numpy as np
 from . import object_detector_network
 from . import scene_detector_network
 from . import action_detector_network
+from ipdb import set_trace
 
 
 class Event_Model(nn.Module):
@@ -18,7 +19,7 @@ class Event_Model(nn.Module):
         self.concept_number = opt.scene_classes + opt.object_classes + opt.action_classes
         self.latent_dimension = 512
         self.num_class = opt.event_classes
-        self.objects_per_frame = opt.objects_per_frame
+        self.objects_per_segment = opt.objects_per_segment
 
         # self.scene_detector = scene_detector_network.Scene_Detector(opt)
         self.object_detector = object_detector_network.Object_Detector(opt)
@@ -52,26 +53,35 @@ class Event_Model(nn.Module):
 
     def postprocess_detection_results(self, detections, batch_size, segment_num, frame_num):
         # detections: List[Dict] len: batch_size * segment_num * frame_num
-        detction_split = [detections[i * frame_num, (i+1) * frame_num] for i in range(batch_size * segment_num)]
+        detection_split = [detections[i * frame_num: (i+1) * frame_num] for i in range(batch_size * segment_num)]
 
         boxes, boxes_features = [], []
 
         # len of detection_split: batch_size * segment_num
-        for preds in detction_split:
+        for preds in detection_split:
+            scores_per_segment = []
             boxes_per_segment = []
             boxes_features_per_segment = []
 
             # len of preds: frame_num; pred is a dict
             for pred in preds:
-                boxes_per_segment.append(pred['boexs'][:self.objects_per_frame])
-                boxes_features_per_segment.append(pred['boxes_feature'][:self.objects_per_frame])
+                boxes_per_segment.append(pred['boxes'])
+                boxes_features_per_segment.append(pred['boxes_feature'])
+                scores_per_segment.append(pred['scores'])
 
             boxes_per_segment = torch.cat(boxes_per_segment)
             boxes_features_per_segment = torch.cat(boxes_features_per_segment)
+            scores_per_segment = torch.cat(scores_per_segment)
+
+            # select top k objects from a segment
+            vals, inds = torch.topk(scores_per_segment, self.objects_per_segment)
+            boxes_per_segment = boxes_per_segment[inds]
+            boxes_features_per_segment = boxes_features_per_segment[inds]
 
             boxes.append(boxes_per_segment)
             boxes_features.append(boxes_features_per_segment)
 
+        set_trace()
         # dim: [batch_size * segment_num, frame_num * self.objects_per_frame, 1024]
         boxes_features = torch.stack(boxes_features)
 
@@ -110,7 +120,7 @@ class Event_Model(nn.Module):
         action_feature = action_feature.view(N, T, -1)
         # todo: use object proposals to extract feature
 
-        
+        set_trace()
         ## max pooling N T F -> N F
         object_feature, _ = torch.max(object_feature, dim=1)
         action_feature, _ = torch.max(action_feature, dim=1)
