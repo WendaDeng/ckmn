@@ -3,7 +3,7 @@ from networks import model_ob
 from networks import model_ac
 from networks import model_scob
 from networks import model_3detectors
-from networks import model_3detectors_graph
+from networks import model_2detectors_graph
 from networks import model_3detectors_nonlocal
 from networks import model_3detectors_dilated
 from networks import model_3detectors_dilated_nonlocal
@@ -52,17 +52,16 @@ def generate_model(opt):
         parameters.append({'params': temp_conv})
         parameters.append({'params': temp})
 
-    elif opt.model_name == 'FtDetectorFc-3detectors-Graph':
-        model = model_3detectors_graph.Event_Model(opt)
+    elif opt.model_name == 'FtDetectorFc-2detectors-Graph':
+        model = model_2detectors_graph.Event_Model(opt)
 
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
 
-        detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
+        detectors_ft_module_names = 'object_detector.fc'
         action_detectors_ft_module_names = 'action_detector.logits'
         temp_fc = []
 
-        # scratch_train_module_names = ['concat_reduce_dim', 'final_classifier']
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
         temp_scratch = []
 

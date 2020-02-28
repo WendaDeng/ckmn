@@ -12,6 +12,7 @@ def parse_opts():
         #default='FtDetectorFc-Ac',
         #default='FtDetectorFc-Scob',
         default='FtDetectorFc-3detectors',
+        # default='FtDetectorFc-2detectors-Graph',
         #default='FtDetectorFc-3detectors-Nonlocal',
         #default='FtDetectorFc-3detectors-Dilated',
         #default='FtDetectorFc-3detectors-Dilated-Nonlocal',
@@ -192,7 +193,7 @@ def parse_opts():
         help='multistep | plateau | step | warmup-cosine | warmup-multistep')
     parser.add_argument(
         '--learning_rate',
-        default=0.1,
+        default=0.006,
         type=float,
         help='Initial learning rate (divided by 10 while training by lr scheduler)')
     parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
@@ -201,7 +202,7 @@ def parse_opts():
     parser.add_argument(
         '--weight_decay', default=1e-5, type=float, help='Weight Decay')
     parser.add_argument(
-        '--lr_decay', default=0.1, type=float, help='Weight Decay')
+        '--lr_decay', default=0.9, type=float, help='Weight Decay')
     parser.add_argument(
         '--loss_weight', default=0.5, type=float, help='Loss Weight')
     parser.add_argument(
@@ -226,7 +227,7 @@ def parse_opts():
     parser.add_argument(
         '--plateau_thres', default=0.01, type=float, help='threshold of LR scheduler, See documentation of ReduceLROnPlateau.')
     parser.add_argument(
-        '--lr_decay_step', default=15, type=int, help='step_size of StepLR scheduler')
+        '--lr_decay_step', default=10, type=int, help='step_size of StepLR scheduler')
     parser.add_argument(
         '--warmup_multiplier', default=100, type=int, help='multiplier of warmup scheduler')
     parser.add_argument(
@@ -243,7 +244,7 @@ def parse_opts():
         help='Training begins at this epoch. Previous trained model indicated by resume_path is loaded.')
     parser.add_argument(
         '--val_per_epoches',
-        default=4,
+        default=2,
         type=int,
         help='Perform validation at every this epochs.')
     parser.add_argument(
