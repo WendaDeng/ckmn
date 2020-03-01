@@ -39,7 +39,7 @@ class Event_Model(nn.Module):
                 nn.init.constant_(l.bias, 0)
 
         self.cls_cnt = self.get_norm_class_cnt(os.path.join(opt.data_root_path,
-                            os.path.join(opt.annotation_path, 'EPIC_full_train_action_labels.pkl')))
+                            os.path.join(opt.annotation_path, 'EPIC_full_train_action_labels.pkl')), opt.device)
 
 
     def _add_classification_layer(self, input_dim):
@@ -50,7 +50,7 @@ class Event_Model(nn.Module):
             self.final_classifier = nn.Linear(input_dim, self.num_class)
 
 
-    def get_norm_class_cnt(self, annotation_file_path):
+    def get_norm_class_cnt(self, annotation_file_path, device):
         labels = pd.read_pickle(annotation_file_path)
         verb_class_cnt, noun_class_cnt = {}, {}
         verb_sum, noun_sum = 0, 0
@@ -90,7 +90,7 @@ class Event_Model(nn.Module):
         sorted_norm_noun_cnt = [v for k, v in sorted(norm_noun_cnt.items(), key=lambda item: item[0])]
         noun_cls_cnt = torch.tensor(sorted_norm_noun_cnt, dtype=torch.float)
 
-        return verb_cls_cnt, noun_cls_cnt
+        return verb_cls_cnt.to(device), noun_cls_cnt.to(device)
 
 
     def forward(self, sceobj_frame):
