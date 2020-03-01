@@ -261,9 +261,14 @@ def parse_opts():
         help='Number of threads for multi-thread loading')
     parser.add_argument(
         '--objects_per_segment',
-        default=16,
+        default=8,
         type=int,
         help='Number of objects to use every segment')
+    parser.add_argument(
+        '--object_feature_dim',
+        default=1024,
+        type=int,
+        help='Dimension of object feature')
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
 

@@ -16,7 +16,7 @@ class Event_Model(nn.Module):
     def __init__(self, opt):
         super(Event_Model, self).__init__()
 
-        self.concept_number = opt.scene_classes + opt.object_classes + opt.action_classes
+        self.feature_dim = opt.object_feature_dim + opt.action_classes
         self.latent_dimension = 512
         self.num_class = opt.event_classes
         self.objects_per_segment = opt.objects_per_segment
@@ -25,7 +25,7 @@ class Event_Model(nn.Module):
         self.object_detector = object_detector_network.Object_Detector(opt)
         self.action_detector = action_detector_network.Action_Detector(opt)
 	
-        self.concat_reduce_dim = nn.Linear(self.concept_number, self.latent_dimension)
+        self.concat_reduce_dim = nn.Linear(self.feature_dim, self.latent_dimension)
         self._add_classification_layer(self.latent_dimension)
         # self.final_classifier = nn.Linear(self.latent_dimension, opt.event_classes)
         self.dropout = nn.Dropout(0.5)
@@ -74,22 +74,22 @@ class Event_Model(nn.Module):
             scores_per_segment = torch.cat(scores_per_segment)
 
             # select top k objects from a segment
-            vals, inds = torch.topk(scores_per_segment, self.objects_per_segment)
-            boxes_per_segment = boxes_per_segment[inds]
-            boxes_features_per_segment = boxes_features_per_segment[inds]
+            if boxes_features_per_segment.shape[0] > self.objects_per_segment:
+                vals, inds = torch.topk(scores_per_segment, self.objects_per_segment)
+                boxes_per_segment = boxes_per_segment[inds]
+                boxes_features_per_segment = boxes_features_per_segment[inds]
 
             boxes.append(boxes_per_segment)
             boxes_features.append(boxes_features_per_segment)
 
-        set_trace()
         # dim: [batch_size * segment_num, frame_num * self.objects_per_frame, 1024]
         boxes_features = torch.stack(boxes_features)
 
         return  boxes, boxes_features
 
 
-
     def forward(self, obj_frame):
+        self.object_detector.eval()
         
         action_frame = obj_frame.permute(0, 1, 3, 2, 4, 5)
         # N: batch size;    T: segment number;  D: sample duration
@@ -102,6 +102,7 @@ class Event_Model(nn.Module):
         detection_results = self.object_detector(obj_frame)
         # features: NTD -> NT 4D F(1024)
         object_boxes, object_features = self.postprocess_detection_results(detection_results, N, T, D)
+        del obj_frame, detection_results
 
         # NT 4D F(1024) -> N T 4D F(1024)
         seg_nums, obj_nums, feat_dim = object_features.shape
@@ -125,7 +126,7 @@ class Event_Model(nn.Module):
         object_feature, _ = torch.max(object_feature, dim=1)
         action_feature, _ = torch.max(action_feature, dim=1)
 
-        del obj_frame, action_frame
+        del action_frame
         ## concat & classification
         classification = torch.cat((object_feature, action_feature), 1)
         del object_feature, action_feature
