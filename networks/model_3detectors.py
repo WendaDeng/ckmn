@@ -1,9 +1,7 @@
+import os
 import torch
 import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
-
-import numpy as np
+import pandas as pd
 
 from . import object_detector_network
 from . import scene_detector_network
@@ -40,6 +38,9 @@ class Event_Model(nn.Module):
                 #nn.init.kaiming_normal_(l.weight, mode='fan_out', nonlinearity='relu')
                 nn.init.constant_(l.bias, 0)
 
+        self.cls_cnt = self.get_norm_class_cnt(os.path.join(opt.data_root_path,
+                            os.path.join(opt.annotation_path, 'EPIC_full_train_action_labels.pkl')))
+
 
     def _add_classification_layer(self, input_dim):
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
@@ -47,6 +48,49 @@ class Event_Model(nn.Module):
             self.fc_noun = nn.Linear(input_dim, self.num_class[1])
         else:
             self.final_classifier = nn.Linear(input_dim, self.num_class)
+
+
+    def get_norm_class_cnt(self, annotation_file_path):
+        labels = pd.read_pickle(annotation_file_path)
+        verb_class_cnt, noun_class_cnt = {}, {}
+        verb_sum, noun_sum = 0, 0
+
+        for i, row in labels.iterrows():
+            metadata = row.to_dict()
+            if metadata['verb_class'] not in verb_class_cnt:
+                verb_class_cnt[metadata['verb_class']] = 1
+            else:
+                verb_class_cnt[metadata['verb_class']] += 1
+            verb_sum += 1
+
+            if metadata['noun_class'] not in noun_class_cnt:
+                noun_class_cnt[metadata['noun_class']] = 1
+            else:
+                noun_class_cnt[metadata['noun_class']] += 1
+            noun_sum += 1
+
+        norm_verb_cnt, norm_noun_cnt = {}, {}
+        for k, v in verb_class_cnt.items():
+            norm_verb_cnt[k] = v / verb_sum
+        for k, v in noun_class_cnt.items():
+            norm_noun_cnt[k] = v / noun_sum
+
+        verb_class = list(range(self.num_class[0]))
+        noun_class = list(range(self.num_class[1]))
+        for i in verb_class:
+            if i not in norm_verb_cnt.keys():   # only has 119 verb class, total is 125
+                norm_verb_cnt[i] = 1e-5
+        for i in noun_class:
+            if i not in norm_noun_cnt.keys():   # only has 321 noun class, total is 352
+                norm_noun_cnt[i] = 1e-6
+
+        sorted_norm_verb_cnt = [v for k, v in sorted(norm_verb_cnt.items(), key=lambda item: item[0])]
+        verb_cls_cnt = torch.tensor(sorted_norm_verb_cnt, dtype=torch.float)
+
+        sorted_norm_noun_cnt = [v for k, v in sorted(norm_noun_cnt.items(), key=lambda item: item[0])]
+        noun_cls_cnt = torch.tensor(sorted_norm_noun_cnt, dtype=torch.float)
+
+        return verb_cls_cnt, noun_cls_cnt
 
 
     def forward(self, sceobj_frame):
@@ -99,11 +143,13 @@ class Event_Model(nn.Module):
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
             # Verb
             base_out_verb = self.fc_verb(classification)
+            out_verb = base_out_verb * self.cls_cnt[0]
 
             # Noun
             base_out_noun = self.fc_noun(classification)
+            out_noun = base_out_noun * self.cls_cnt[1]
 
-            output = (base_out_verb, base_out_noun)
+            output = (out_verb, out_noun)
         else:
             output = self.final_classifier(classification)
 
