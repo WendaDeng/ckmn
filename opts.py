@@ -202,12 +202,12 @@ def parse_opts():
     parser.add_argument(
         '--weight_decay', default=1e-5, type=float, help='Weight Decay')
     parser.add_argument(
-        '--lr_decay', default=0.9, type=float, help='Weight Decay')
+        '--lr_decay', default=0.7, type=float, help='Weight Decay')
     parser.add_argument(
         '--loss_weight', default=0.5, type=float, help='Loss Weight')
     parser.add_argument(
         # '--milestones', '--arg', nargs='+', type=int, help='Milestones'
-        '--milestones', default = [60], type = float, nargs = "+",
+        '--milestones', default = [50, 80], nargs = "+",
         metavar = 'LRSteps', help = 'epochs to decay learning rate by 10')
     parser.add_argument(
         '--clip', default=5.0, type=float, help='gradient clip max norm')
@@ -269,6 +269,9 @@ def parse_opts():
         default=1024,
         type=int,
         help='Dimension of object feature')
+    parser.add_argument(
+        '--use_class_cnt', action='store_true', help='If true, class bias count is used.')
+    parser.set_defaults(use_class_cnt=False)
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
 

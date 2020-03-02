@@ -16,6 +16,7 @@ class Event_Model(nn.Module):
         self.concept_number = opt.scene_classes + opt.object_classes + opt.action_classes
         self.latent_dimension = 512
         self.num_class = opt.event_classes
+        self.use_class_cnt = opt.use_class_cnt
 
         self.scene_detector = scene_detector_network.Scene_Detector(opt)
         self.object_detector = object_detector_network.Object_Detector(opt)
@@ -39,7 +40,7 @@ class Event_Model(nn.Module):
                 nn.init.constant_(l.bias, 0)
 
         self.cls_cnt = self.get_norm_class_cnt(os.path.join(opt.data_root_path,
-                            os.path.join(opt.annotation_path, 'EPIC_full_train_action_labels.pkl')), opt.device)
+                            os.path.join(opt.annotation_path, 'EPIC_full_train_action_labels.pkl')))
 
 
     def _add_classification_layer(self, input_dim):
@@ -50,7 +51,7 @@ class Event_Model(nn.Module):
             self.final_classifier = nn.Linear(input_dim, self.num_class)
 
 
-    def get_norm_class_cnt(self, annotation_file_path, device):
+    def get_norm_class_cnt(self, annotation_file_path):
         labels = pd.read_pickle(annotation_file_path)
         verb_class_cnt, noun_class_cnt = {}, {}
         verb_sum, noun_sum = 0, 0
@@ -90,7 +91,7 @@ class Event_Model(nn.Module):
         sorted_norm_noun_cnt = [v for k, v in sorted(norm_noun_cnt.items(), key=lambda item: item[0])]
         noun_cls_cnt = torch.tensor(sorted_norm_noun_cnt, dtype=torch.float)
 
-        return verb_cls_cnt.to(device), noun_cls_cnt.to(device)
+        return [verb_cls_cnt, noun_cls_cnt]
 
 
     def forward(self, sceobj_frame):
@@ -141,15 +142,14 @@ class Event_Model(nn.Module):
         classification = self.dropout(classification)
 
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
-            # Verb
             base_out_verb = self.fc_verb(classification)
-            out_verb = base_out_verb * self.cls_cnt[0]
-
-            # Noun
             base_out_noun = self.fc_noun(classification)
-            out_noun = base_out_noun * self.cls_cnt[1]
 
-            output = (out_verb, out_noun)
+            if self.use_class_cnt:
+                base_out_verb = base_out_verb * self.cls_cnt[0].to(base_out_verb.device)
+                base_out_noun = base_out_noun * self.cls_cnt[1].to(base_out_noun.device)
+
+            output = (base_out_verb, base_out_noun)
         else:
             output = self.final_classifier(classification)
 
