@@ -21,7 +21,7 @@ class Event_Model(nn.Module):
         self.scene_detector = scene_detector_network.Scene_Detector(opt)
         self.object_detector = object_detector_network.Object_Detector(opt)
         self.action_detector = action_detector_network.Action_Detector(opt)
-	
+
         self.concat_reduce_dim = nn.Linear(self.concept_number, self.latent_dimension)
         self._add_classification_layer(self.latent_dimension)
         # self.final_classifier = nn.Linear(self.latent_dimension, opt.event_classes)
@@ -147,7 +147,9 @@ class Event_Model(nn.Module):
 
             if self.use_class_cnt:
                 base_out_verb = base_out_verb * self.cls_cnt[0].to(base_out_verb.device)
+                nn.functional.normalize(base_out_verb, p=2, dim=1)
                 base_out_noun = base_out_noun * self.cls_cnt[1].to(base_out_noun.device)
+                nn.functional.normalize(base_out_noun, p=2, dim=1)
 
             output = (base_out_verb, base_out_noun)
         else:
