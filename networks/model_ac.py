@@ -15,8 +15,10 @@ class Event_Model(nn.Module):
     def __init__(self, opt):
         super(Event_Model, self).__init__()
 
+        self.latent_dimension = 1024
         self.num_class = opt.event_classes
         self.action_detector = action_detector_network.Action_Detector(opt)
+        self.concat_reduce_dim = nn.Linear(opt.action_classes, self.latent_dimension)
         self._add_classification_layer(opt.action_classes)
         # self.final_classifier = nn.Linear(opt.action_classes, opt.event_classes)
         self.dropout = nn.Dropout(0.5)
@@ -58,8 +60,12 @@ class Event_Model(nn.Module):
         ## max pooling N T F -> N F
         action_feature, _ = torch.max(action_feature, dim=1)
 
-        ## concat & classification
+        ## classification
         classification = self.relu(action_feature)
+        classification = self.dropout(classification)
+        classification = self.concat_reduce_dim(classification)
+
+        classification = self.relu(classification)
         classification = self.dropout(classification)
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
             # Verb
