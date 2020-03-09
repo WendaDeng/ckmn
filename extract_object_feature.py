@@ -184,7 +184,7 @@ class Predictor(DefaultPredictor):
 			image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))
 
 			inputs = {"image": image, "height": height, "width": width}
-			images = self.model.preprocess_image(inputs)
+			images = self.model.preprocess_image([inputs])
 			features = self.model.backbone(images.tensor)
 			proposals, _ = self.model.proposal_generator(images, features)
 			instances = self.model.roi_heads._forward_box(features, proposals)
@@ -193,7 +193,7 @@ class Predictor(DefaultPredictor):
 			box_features = self.get_box_features(features, [x.pred_boxes for x in instances])
 			mask_features = self.get_mask_features(features, [x.pred_boxes for x in instances])
 
-			for box_feature, mask_feature, instance in zip(box_features, mask_features, instances):
+			for box_feature, mask_feature, instance in zip([box_features], [mask_features], instances):
 				instance.box_features = box_feature
 				instance.mask_features = mask_feature
 
@@ -207,11 +207,7 @@ class Predictor(DefaultPredictor):
 
 	def get_mask_features(self, features, boxes):
 		mask_features = self.model.roi_heads.mask_pooler(features, boxes)
-		shape = mask_features[1:]
-		mask_head = build_box_head(
-			self.cfg, ShapeSpec(channels=shape[0], height=shape[1], width=shape[2])
-		)
-		mask_features = mask_head(mask_features)
+		mask_features = self.model.roi_heads.box_head(mask_features)
 
 		return mask_features
 
@@ -232,30 +228,26 @@ if __name__ == "__main__":
 		predictor = Predictor(cfg)
 
 	if args.input:
-		if len(args.input) == 1:
-			args.input = glob.glob(os.path.expanduser(args.input[0]))
-			assert args.input, "The input path(s) was not found"
-		for path in tqdm.tqdm(args.input, disable=not args.output):
-			# use PIL, to be consistent with evaluation
-			img = read_image(path, format="BGR")
-			start_time = time.time()
-			predictions = predictor(img)
-			logger.info(
-				"{}: {} in {:.2f}s".format(
-					path,
-					"detected {} instances".format(len(predictions.scores.shape[0])),
-					time.time() - start_time,
+		for img_dir in os.listdir(args.input):
+			imgs = glob.glob(os.path.expanduser(os.path.join(args.input, img_dir, '*/*.jpg')))
+			for path in tqdm.tqdm(args.input, disable=not args.output):
+				# use PIL, to be consistent with evaluation
+				img = read_image(path, format="BGR")
+				start_time = time.time()
+				predictions = predictor(img)[0]
+				logger.info(
+					"{}: {} in {:.2f}s".format(
+						path,
+						"detected {} instances".format(predictions.scores.shape[0]),
+						time.time() - start_time,
+					)
 				)
-			)
 
-			if args.output:
-				if os.path.isdir(args.output):
-					assert os.path.isdir(args.output), args.output
-					basename = os.path.basename(path)
-					out_filename = os.path.join(args.output, os.path.splitext(basename)[0], '.pkl')
-				else:
-					assert len(args.input) == 1, "Please specify a directory with args.output"
-					out_filename = args.output
+				dirname, basename = os.path.split(path)
+				output_dir = dirname.replace('videos_256x256_30', 'features')
+				os.makedirs(output_dir) if not os.path.exists(output_dir) else None
+				out_filename = os.path.join(output_dir, os.path.splitext(basename)[0]) + '.npz'
+
 				with open(out_filename, 'wb') as f:
-					np.savez(f, box_features=predictions.box_features,
-							 mask_features=predictions.mask_features)
+					np.savez(f, box_features=predictions.box_features.cpu().numpy(),
+							 mask_features=predictions.mask_features.cpu().numpy())
