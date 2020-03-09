@@ -705,6 +705,19 @@ def I3D(opt=None, weight_dir=None):
 
     return model
 
+def fine_tuned_I3D(opt=None, weight_dir=None):
+    """Constructs a I3D model from saved checkpoint.
+    """
+    model = InceptionI3d(num_classes=opt.action_classes, in_channels=3)
+    model_dict = model.state_dict()
+    checkpoint = torch.load(weight_dir, map_location=lambda storage, loc: storage)
+    state_dict = {str.replace(k, 'module.action_detector.', ''): v
+                  for k, v in checkpoint['state_dict'].items() if 'action_detector' in k}
+    model_dict.update(state_dict)
+    model.load_state_dict(model_dict)
+
+    return model
+
 class Backbone(nn.Sequential):
     """
     Internally, it uses torchvision.models._utils.IntermediateLayerGetter to
@@ -742,6 +755,9 @@ def Action_Detector(opt=None):
         #                  'Mixed_4f': 4, 'Mixed_5b': 5, 'Mixed_5c': 6}
         # out_channels = 256
         # return Backbone(model, return_layers, out_channels)
+    elif opt.action_base_model == "ft_I3D":
+        weight_dir = '../weights/epic_I3D.pth'
+        model = fine_tuned_I3D(opt, weight_dir)
     else:
         print('Error, no such model')
 
