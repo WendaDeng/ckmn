@@ -2,21 +2,18 @@
 import argparse
 import atexit
 import bisect
-import fvcore.nn.weight_init as weight_init
 import glob
 import multiprocessing as mp
 import numpy as np
 import os
 import time
-import cv2
 import tqdm
 import torch
 
-from torch.nn import functional as F
 from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
 from detectron2.engine.defaults import DefaultPredictor
-from detectron2.layers import Linear, ShapeSpec
+from detectron2.layers import ShapeSpec
 from detectron2.modeling.roi_heads.box_head import build_box_head
 from detectron2.utils.logger import setup_logger
 
@@ -246,9 +243,7 @@ if __name__ == "__main__":
 			logger.info(
 				"{}: {} in {:.2f}s".format(
 					path,
-					"detected {} instances".format(len(predictions["instances"]))
-					if "instances" in predictions
-					else "finished",
+					"detected {} instances".format(len(predictions.scores.shape[0])),
 					time.time() - start_time,
 				)
 			)
@@ -257,8 +252,10 @@ if __name__ == "__main__":
 				if os.path.isdir(args.output):
 					assert os.path.isdir(args.output), args.output
 					basename = os.path.basename(path)
-					out_filename = os.path.join(args.output, os.path.splitext(basename)[0], '.npz')
+					out_filename = os.path.join(args.output, os.path.splitext(basename)[0], '.pkl')
 				else:
 					assert len(args.input) == 1, "Please specify a directory with args.output"
 					out_filename = args.output
-				np.save(out_filename)
+				with open(out_filename, 'wb') as f:
+					np.savez(f, box_features=predictions.box_features,
+							 mask_features=predictions.mask_features)
