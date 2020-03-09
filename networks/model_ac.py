@@ -19,7 +19,7 @@ class Event_Model(nn.Module):
         self.num_class = opt.event_classes
         self.action_detector = action_detector_network.Action_Detector(opt)
         self.concat_reduce_dim = nn.Linear(opt.action_classes, self.latent_dimension)
-        self._add_classification_layer(opt.action_classes)
+        self._add_classification_layer(self.latent_dimension)
         # self.final_classifier = nn.Linear(opt.action_classes, opt.event_classes)
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU(inplace=True)
