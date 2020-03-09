@@ -158,10 +158,11 @@ def generate_model(opt):
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
 
-        action_detectors_ft_module_names = 'action_detector.logits'
+        action_detectors_ft_module_names = ['action_detector.logits', 'action_detector.Mixed_5',
+                                            'action_detector.Mixed_4', 'action_detector.Mixed_3']
         temp_fc = []
 
-        scratch_train_module_names = ['final_classifier', 'fc_verb', 'fc_noun']
+        scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
         temp_scratch = []
 
         parameters = []
@@ -170,7 +171,8 @@ def generate_model(opt):
                 print('a', k)
                 temp_conv.append(v)
 
-            elif action_detectors_ft_module_names in k:
+            elif k[:-5] in action_detectors_ft_module_names or k[:-7] in action_detectors_ft_module_names or \
+                    k[:23] in action_detectors_ft_module_names:
                 print('b', k)
                 temp_fc.append(v)
 
