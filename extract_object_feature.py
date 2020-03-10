@@ -69,6 +69,7 @@ def get_parser():
 		nargs=argparse.REMAINDER,
 	)
 	parser.add_argument("--parallel", action="store_true", help="Whether to run the model in different processes")
+	parser.add_argument("--gpu_id", type=str, default='0', help="GPU id to use")
 	return parser
 
 
@@ -215,6 +216,7 @@ class Predictor(DefaultPredictor):
 if __name__ == "__main__":
 	mp.set_start_method("spawn", force=True)
 	args = get_parser().parse_args()
+	os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 	setup_logger(name="fvcore")
 	logger = setup_logger()
 	logger.info("Arguments: " + str(args))
@@ -228,9 +230,16 @@ if __name__ == "__main__":
 		predictor = Predictor(cfg)
 
 	if args.input:
-		for img_dir in os.listdir(args.input):
-			imgs = glob.glob(os.path.expanduser(os.path.join(args.input, img_dir, '*/*.jpg')))
-			for path in tqdm.tqdm(args.input, disable=not args.output):
+		for img_dir in os.listdir(args.input[0]):
+			imgs = glob.glob(os.path.expanduser(os.path.join(args.input[0], img_dir, '*/*.jpg')))
+			for path in tqdm.tqdm(imgs, disable=not args.output):
+				dirname, basename = os.path.split(path)
+				output_dir = dirname.replace('videos_256x256_30', 'features')
+				os.makedirs(output_dir) if not os.path.exists(output_dir) else None
+				out_filename = os.path.join(output_dir, os.path.splitext(basename)[0]) + '.npz'
+				if os.path.exists(out_filename):
+					continue
+
 				# use PIL, to be consistent with evaluation
 				img = read_image(path, format="BGR")
 				start_time = time.time()
@@ -242,11 +251,6 @@ if __name__ == "__main__":
 						time.time() - start_time,
 					)
 				)
-
-				dirname, basename = os.path.split(path)
-				output_dir = dirname.replace('videos_256x256_30', 'features')
-				os.makedirs(output_dir) if not os.path.exists(output_dir) else None
-				out_filename = os.path.join(output_dir, os.path.splitext(basename)[0]) + '.npz'
 
 				with open(out_filename, 'wb') as f:
 					np.savez(f, box_features=predictions.box_features.cpu().numpy(),
