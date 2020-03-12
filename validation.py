@@ -35,14 +35,19 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, writer):
         for i, data in enumerate(data_loader):
             data_time.update(time.time() - end_time)
 
-            inputs = data[0]
-            targets = data[1]
+            if opt.use_object_feature:
+                inputs, targets, obj_features = data
 
-            # all_targets.append(targets)
+                inputs = inputs.to(opt.device)
+                obj_features = obj_features.to(opt.device)
+                outputs = model(inputs, obj_features)
+            else:
+                inputs = data[0]
+                targets = data[1]
 
-            inputs = inputs.to(opt.device)
+                inputs = inputs.to(opt.device)
+                outputs = model(inputs)
 
-            outputs = model(inputs)
             batch_size = inputs.size(0)
             # classification_results_final.append(outputs.cpu().data)
             if opt.dataset == 'EPIC':

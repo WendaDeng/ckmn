@@ -38,16 +38,20 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
         data_time.update(time.time() - end_time)
 
-        inputs = data[0]
-        targets = data[1]
+        if opt.use_object_feature:
+            inputs, targets, obj_features = data
 
-        # all_targets.append(targets)
+            inputs = inputs.to(opt.device)
+            obj_features = obj_features.to(opt.device)
+            outputs = model(inputs, obj_features)
+        else:
+            inputs = data[0]
+            targets = data[1]
 
-        inputs = inputs.to(opt.device)
+            inputs = inputs.to(opt.device)
+            outputs = model(inputs)
 
         optimizer.zero_grad()
-
-        outputs = model(inputs)
 
         # classification_results_final.append(outputs.cpu().data)
 
