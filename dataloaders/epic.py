@@ -209,6 +209,6 @@ class EPIC(data.Dataset):
 					feature = torch.from_numpy(npzfile['mask_features'])
 				features.append(feature)
 		features = torch.cat(features, dim=0)
-		feature = torch.max(features, dim=0)
+		feature, _ = torch.max(features, dim=0)
 
 		return feature
