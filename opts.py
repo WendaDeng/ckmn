@@ -10,6 +10,7 @@ def parse_opts():
         #default='FtDetectorFc-Sc',
         #default='FtDetectorFc-Ob',
         #default='FtDetectorFc-Ac',
+        # default='FtDetectorFc-Acob',
         #default='FtDetectorFc-Scob',
         default='FtDetectorFc-3detectors',
         # default='FtDetectorFc-2detectors-Graph',

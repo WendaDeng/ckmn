@@ -185,6 +185,39 @@ def generate_model(opt):
         parameters.append({'params': temp_conv})
         parameters.append({'params': temp})
 
+    elif opt.model_name == 'FtDetectorFc-Acob':
+        model = model_ac.Event_Model(opt)
+
+        conv_ft_module_names = 'layer4.2.conv3'
+        temp_conv = []
+
+        action_detectors_ft_module_names = ['action_detector.logits', 'action_detector.Mixed_5',
+                                            'action_detector.Mixed_4']
+        temp_fc = []
+
+        scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
+        temp_scratch = []
+
+        parameters = []
+        for k, v in model.named_parameters():
+            if conv_ft_module_names in k:
+                print('a', k)
+                temp_conv.append(v)
+
+            elif k[:-5] in action_detectors_ft_module_names or k[:-7] in action_detectors_ft_module_names or \
+                    k[:23] in action_detectors_ft_module_names:
+                print('b', k)
+                temp_fc.append(v)
+
+            elif k[:-5] in scratch_train_module_names or k[:-7] in scratch_train_module_names:
+                print('c', k)
+                temp_scratch.append(v)
+            else:
+                v.requires_grad = False
+        temp = temp_fc + temp_scratch
+        parameters.append({'params': temp_conv})
+        parameters.append({'params': temp})
+
     elif opt.model_name == 'FtDetectorFc-Scob':
         model = model_scob.Event_Model(opt)
 
