@@ -54,6 +54,11 @@ def parse_opts():
         type=str,
         help='Directory path of Videos')
     parser.add_argument(
+        '--object_feature_path',
+        default='features',
+        type=str,
+        help='Directory path of feature')
+    parser.add_argument(
         '--annotation_path',
         # default='video_labels/',
         default='meta',
@@ -269,6 +274,10 @@ def parse_opts():
         default=1024,
         type=int,
         help='Dimension of object feature')
+    parser.add_argument(
+        '--use_object_feature', action='store_true', help='If true, object feature is used.')
+    parser.add_argument(
+        '--object_feature_type', type=str, default='box', help='box | mask')
     parser.add_argument(
         '--use_class_cnt', action='store_true', help='If true, class bias count is used.')
     parser.set_defaults(use_class_cnt=False)

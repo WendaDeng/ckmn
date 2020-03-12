@@ -54,23 +54,18 @@ if __name__ == '__main__':
     if opt.data_root_path != '':
         opt.video_path = os.path.join(
             opt.data_root_path, opt.dataset, opt.video_path)
+        opt.object_feature_path = os.path.join(
+            opt.data_root_path, opt.dataset, opt.object_feature_path)
         if opt.dataset == 'EPIC':
             opt.annotation_path = os.path.join(
-                opt.data_root_path,
-                opt.dataset,
-                opt.annotation_path)
+                opt.data_root_path, opt.dataset, opt.annotation_path)
         else:
             opt.annotation_path = os.path.join(
-                opt.data_root_path,
-                opt.dataset,
-                opt.annotation_path +
-                opt.dataset +
-                '.json')
+                opt.data_root_path, opt.dataset,
+                opt.annotation_path + opt.dataset + '.json')
     if opt.result_path != '':
         opt.result_path = os.path.join(
-            opt.result_path,
-            opt.dataset,
-            opt.model_name)
+            opt.result_path, opt.dataset, opt.model_name)
         if opt.resume_path:
             opt.resume_path = os.path.join(opt.result_path, opt.resume_path)
         opt.save_path = os.path.join(opt.result_path, timestamp)

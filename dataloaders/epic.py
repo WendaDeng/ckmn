@@ -92,10 +92,9 @@ def get_video_names(metadata, video_path_full):
 	return video_names
 
 
-def make_dataset(root_path, video_path, annotation_path, class_num):
-	annotations = load_annotation_data(os.path.join(root_path, annotation_path))
-	video_path_full = os.path.join(root_path, video_path)
-	video_names = get_video_names(annotations, video_path_full)
+def make_dataset(video_path, annotation_path, class_num):
+	annotations = load_annotation_data(annotation_path)
+	video_names = get_video_names(annotations, video_path)
 
 	print('len of video_names', len(video_names))
 	dataset = []
@@ -137,19 +136,25 @@ def make_dataset(root_path, video_path, annotation_path, class_num):
 class EPIC(data.Dataset):
 
 	def __init__(self,
-				 root_path,
 				 video_path,
 				 annotation_path,
+				 object_feature_path,
 				 class_num=(125, 352),
 				 spatial_transform=None,
 				 temporal_transform=None,
-				 get_loader=get_default_video_loader):
+				 get_loader=get_default_video_loader,
+				 obj_feature_type=None,
+				 use_obj_feature=False):
 
-		self.data = make_dataset(root_path, video_path, annotation_path, class_num)
+		self.data = make_dataset(video_path, annotation_path, class_num)
 
 		self.spatial_transform = spatial_transform
 		self.temporal_transform = temporal_transform
 		self.loader = get_loader()
+		self.video_path = video_path
+		self.object_feature_path = object_feature_path
+		self.use_obj_feature = use_obj_feature
+		self.obj_feature_type = obj_feature_type
 
 	def __len__(self):
 		return len(self.data)
@@ -172,7 +177,38 @@ class EPIC(data.Dataset):
 
 			temp_sceobj_clip = torch.stack(temp_sceobj_clip, 0)
 			sceobj_clip.append(temp_sceobj_clip)
-
 		sceobj_clip = torch.stack(sceobj_clip, 0)
 
+		if self.use_obj_feature:
+			obj_features = []
+			for i in range(len(frame_indices)):
+				path = path.replace(self.video_path, self.object_feature_path)
+				obj_feature = self.load_feature(path, frame_indices[i], self.obj_feature_type)
+				obj_features.append(obj_feature)
+
+			obj_features = torch.stack(obj_features, 0)
+			return sceobj_clip, target, obj_features
+
 		return sceobj_clip, target
+
+	def load_feature(self, feature_path, frame_indices, obj_feature_type='box'):
+		"""
+		:param feature_path: path that store object features
+		:param frame_indices: ['frame_0000000001.jpg', 'frame_0000000002.jpg', ...]
+		:param obj_feature_type: 'box' or 'mask'
+		:return: tensor which has shape of [N, 1024], N is total number of objects in all frames
+		 """
+		features = []
+		for i in frame_indices:
+			npz_file = os.path.join(feature_path, i.replace('.jpg', '.npz'))
+			if os.path.exists(npz_file):
+				npzfile = np.load(npz_file)
+				if obj_feature_type == 'box':
+					feature = torch.from_numpy(npzfile['box_features'])
+				elif obj_feature_type == 'mask':
+					feature = torch.from_numpy(npzfile['mask_features'])
+				features.append(feature)
+		features = torch.cat(features, dim=0)
+		feature = torch.max(features, dim=0)
+
+		return feature

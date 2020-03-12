@@ -30,11 +30,13 @@ def get_training_set(opt, sceobj_spatial_transform, temporal_transform):
             temporal_transform=temporal_transform)
     elif opt.dataset == 'EPIC':
         training_data = EPIC(
-            opt.data_root_path,
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_train_action_labels.pkl'),
             spatial_transform=sceobj_spatial_transform,
-            temporal_transform=temporal_transform)
+            temporal_transform=temporal_transform,
+            object_feature_path=opt.object_feature_path,
+            obj_feature_type=opt.object_feature_type,
+            use_obj_feature=opt.use_object_feature)
     return training_data
 
 
@@ -63,9 +65,11 @@ def get_validation_set(opt, sceobj_spatial_transform, temporal_transform):
                 temporal_transform=temporal_transform)
     elif opt.dataset == 'EPIC':
         validation_data = EPIC(
-            opt.data_root_path,
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_val_action_labels.pkl'),
             spatial_transform=sceobj_spatial_transform,
-            temporal_transform=temporal_transform)
+            temporal_transform=temporal_transform,
+            object_feature_path=opt.object_feature_path,
+            obj_feature_type=opt.object_feature_type,
+            use_obj_feature=opt.use_object_feature)
     return validation_data
