@@ -190,6 +190,14 @@ class Predictor(DefaultPredictor):
 			proposals, _ = self.model.proposal_generator(images, features)
 			instances = self.model.roi_heads._forward_box(features, proposals)
 
+			# if no object was detected, then use whole image as bbox
+			if instances[0].scores.shape[0] == 0:
+				w, h = instances[0].image_size
+				tbox = torch.from_numpy(np.array([0, 0, w, h]))
+				tbox = tbox.view(1, -1).to(instances[0].pred_boxes.tensor.device,
+										   instances[0].pred_boxes.tensor.dtype)
+				instances[0].pred_boxes.tensor = torch.cat((instances[0].pred_boxes.tensor, tbox), dim=0)
+
 			features = [features[f] for f in self.model.roi_heads.in_features]
 			box_features = self.get_box_features(features, [x.pred_boxes for x in instances])
 			mask_features = self.get_mask_features(features, [x.pred_boxes for x in instances])
@@ -238,7 +246,8 @@ if __name__ == "__main__":
 				os.makedirs(output_dir) if not os.path.exists(output_dir) else None
 				out_filename = os.path.join(output_dir, os.path.splitext(basename)[0]) + '.npz'
 				if os.path.exists(out_filename):
-					continue
+					if os.stat(out_filename).st_size > 536:
+						continue
 
 				# use PIL, to be consistent with evaluation
 				img = read_image(path, format="BGR")
