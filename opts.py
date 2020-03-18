@@ -119,6 +119,8 @@ def parse_opts():
         default=400,
         type=int,
         help='Number of action classes')
+    parser.add_argument(
+        '--action_ft_layers', default='5,4', type=str, help='Layers to fine tuned in action detector')
 
     # gpu
     parser.add_argument(
@@ -284,6 +286,8 @@ def parse_opts():
     parser.set_defaults(use_class_cnt=False)
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
+    parser.add_argument(
+        '--dataset_break', default=5, type=int, help='Sampling break of dataset')
 
     args = parser.parse_args()
 

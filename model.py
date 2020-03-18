@@ -158,8 +158,9 @@ def generate_model(opt):
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
 
-        action_detectors_ft_module_names = ['action_detector.logits', 'action_detector.Mixed_5',
-                                            'action_detector.Mixed_4', 'action_detector.Mixed_3']
+        action_detectors_ft_module_names = ['action_detector.logits']
+        for l in opt.action_ft_layers.split(','):
+            action_detectors_ft_module_names.append('action_detector.Mixed_' + l)
         temp_fc = []
 
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
@@ -191,8 +192,9 @@ def generate_model(opt):
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
 
-        action_detectors_ft_module_names = ['action_detector.logits', 'action_detector.Mixed_5',
-                                            'action_detector.Mixed_4']
+        action_detectors_ft_module_names = ['action_detector.logits']
+        for l in opt.action_ft_layers.split(','):
+            action_detectors_ft_module_names.append('action_detector.Mixed_' + l)
         temp_fc = []
 
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']

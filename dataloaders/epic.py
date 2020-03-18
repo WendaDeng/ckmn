@@ -69,12 +69,12 @@ def get_default_video_loader():
 	return functools.partial(video_loader, image_loader=image_loader)
 
 
-def load_annotation_data(data_file_path):
+def load_annotation_data(data_file_path, dataset_break=5):
 	labels = pd.read_pickle(data_file_path)
 	data = []
 	j = 0
 	for i, row in labels.iterrows():
-		if j % 5 == 0:
+		if j % dataset_break == 0:
 			metadata = row.to_dict()
 			metadata['uid'] = i
 			data.append(metadata)
@@ -92,8 +92,8 @@ def get_video_names(metadata, video_path_full):
 	return video_names
 
 
-def make_dataset(video_path, annotation_path, class_num):
-	annotations = load_annotation_data(annotation_path)
+def make_dataset(video_path, annotation_path, dataset_break):
+	annotations = load_annotation_data(annotation_path, dataset_break)
 	video_names = get_video_names(annotations, video_path)
 
 	print('len of video_names', len(video_names))
@@ -139,14 +139,14 @@ class EPIC(data.Dataset):
 				 video_path,
 				 annotation_path,
 				 object_feature_path,
-				 class_num=(125, 352),
+				 dataset_break=5,
 				 spatial_transform=None,
 				 temporal_transform=None,
 				 get_loader=get_default_video_loader,
 				 obj_feature_type=None,
 				 use_obj_feature=False):
 
-		self.data = make_dataset(video_path, annotation_path, class_num)
+		self.data = make_dataset(video_path, annotation_path, dataset_break)
 
 		self.spatial_transform = spatial_transform
 		self.temporal_transform = temporal_transform

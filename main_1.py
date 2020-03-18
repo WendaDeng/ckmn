@@ -68,7 +68,8 @@ if __name__ == '__main__':
             opt.result_path, opt.dataset, opt.model_name)
         if opt.resume_path:
             opt.resume_path = os.path.join(opt.result_path, opt.resume_path)
-        opt.save_path = os.path.join(opt.result_path, timestamp)
+        opt.save_path = os.path.join(opt.result_path, '{}_{}_{}_Mixed{}_{}'.format(
+            timestamp, opt.learning_rate, opt.lr_decay, opt.action_ft_layers, opt.dataset_break))
         os.makedirs(opt.save_path)
 
     opt.scales = [opt.initial_scale]
