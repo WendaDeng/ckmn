@@ -20,6 +20,7 @@ class Event_Model(nn.Module):
         self.action_detector = action_detector_network.Action_Detector(opt)
 
         self.concat_reduce_dim = nn.Linear(self.concept_number, self.latent_dimension)
+        self._add_object_ft_layer(opt.object_feature_dim)
         self._add_classification_layer(self.latent_dimension)
         # self.final_classifier = nn.Linear(self.latent_dimension, opt.event_classes)
         self.dropout = nn.Dropout(0.5)
@@ -35,6 +36,10 @@ class Event_Model(nn.Module):
                 nn.init.normal_(l.weight, 0, 0.01)
                 #nn.init.kaiming_normal_(l.weight, mode='fan_out', nonlinearity='relu')
                 nn.init.constant_(l.bias, 0)
+
+    def _add_object_ft_layer(self, input_dim):
+        self.obj_fc1 = nn.Linear(input_dim, input_dim)
+        self.obj_fc2 = nn.Linear(input_dim, input_dim)
 
 
     def _add_classification_layer(self, input_dim):
@@ -63,6 +68,13 @@ class Event_Model(nn.Module):
         del action_frame
         # NT F -> N T F
         action_feature = action_feature.view(N, T, -1)
+
+        object_feature = self.relu(object_feature)
+        object_feature = self.dropout(object_feature)
+        object_feature = self.obj_fc1(object_feature)
+        object_feature = self.relu(object_feature)
+        object_feature = self.dropout(object_feature)
+        object_feature = self.obj_fc2(object_feature)
         
         ## max pooling N T F -> N F
         object_feature, _ = torch.max(object_feature, dim=1)
