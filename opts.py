@@ -215,8 +215,8 @@ def parse_opts():
         '--loss_weight', default=0.5, type=float, help='Loss Weight')
     parser.add_argument(
         # '--milestones', '--arg', nargs='+', type=int, help='Milestones'
-        '--milestones', default = [50, 80], nargs = "+",
-        metavar = 'LRSteps', help = 'epochs to decay learning rate by 10')
+        '--milestones', default = [50, 80], nargs = "+", type=int,
+        metavar = 'LRSteps', help = 'epochs to decay learning rate with lr_decay')
     parser.add_argument(
         '--clip', default=5.0, type=float, help='gradient clip max norm')
     parser.add_argument(
