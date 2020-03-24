@@ -11,12 +11,13 @@ from tensorboardX import SummaryWriter
 import torch.backends.cudnn as cudnn
 
 from opts import parse_opts
-from dataloaders.dataset import get_training_set, get_validation_set
+from dataloaders.dataset import get_training_set, get_validation_set, get_test_set
 
 from model import generate_model
 from utils import Logger, get_fine_tuning_parameters
 from train_1 import train_epoch
 from validation import val_epoch
+from test import test, print_accuracy, save_scores
 
 import torchvision.transforms as transforms
 from temporal_transforms import TemporalSegmentRandomCrop, TemporalSegmentCenterCrop
@@ -68,9 +69,12 @@ if __name__ == '__main__':
             opt.result_path, opt.dataset, opt.model_name)
         if opt.resume_path:
             opt.resume_path = os.path.join(opt.result_path, opt.resume_path)
-        opt.save_path = os.path.join(opt.result_path, '{}_{}_{}_{}_Mixed{}_{}%'.format(
-            timestamp, opt.scheduler, opt.learning_rate, opt.lr_decay, opt.action_ft_layers,
-            int(100 / opt.dataset_break)))
+        if opt.test:
+            opt.save_path = os.path.join(opt.result_path, '{}_{}'.format(timestamp, 'test'))
+        else:
+            opt.save_path = os.path.join(opt.result_path, '{}_{}_{}_{}_Mixed{}_{}%'.format(
+                timestamp, opt.scheduler, opt.learning_rate, opt.lr_decay, opt.action_ft_layers,
+                int(100 / opt.dataset_break)))
         os.makedirs(opt.save_path)
 
     opt.scales = [opt.initial_scale]
@@ -146,6 +150,25 @@ if __name__ == '__main__':
 
     normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
+    ## prepare test
+    if opt.test:
+        assert opt.resume_path, "resume_path can't be None!"
+        opt.no_train = True
+        opt.no_validation = True
+
+        temporal_transform = TemporalSegmentCenterCrop(opt.segment_number, opt.sample_duration)
+        sceobj_spatial_transform = Compose([Scale(opt.sceobj_frame_size),
+                                    CenterCrop(opt.sceobj_frame_size), ToTensor(opt.norm_value), normalize])
+
+        seen_test_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='seen')
+        unseen_test_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='unseen')
+
+        seen_test_loader = DataLoaderX(seen_test_data, batch_size=opt.batch_size, shuffle=False,
+                                num_workers=opt.n_threads, pin_memory=True, drop_last=True)
+        unseen_test_loader = DataLoaderX(unseen_test_data, batch_size=opt.batch_size, shuffle=False,
+                                num_workers=opt.n_threads, pin_memory=True, drop_last=True)
+        test_loader = dict(seen_test_loader=seen_test_loader, unseen_test_loader=unseen_test_loader)
+
     ## prepare train
     if not opt.no_train:
         temporal_transform = TemporalSegmentRandomCrop(opt.segment_number, opt.sample_duration)
@@ -158,11 +181,7 @@ if __name__ == '__main__':
         elif opt.train_crop == 'center':
             sceobj_crop_method = MultiScaleCornerCrop(opt.scales, opt.sceobj_frame_size, crop_positions=['c'])
         sceobj_spatial_transform = Compose([
-            sceobj_crop_method,
-            RandomHorizontalFlip(),
-            ToTensor(opt.norm_value),
-            normalize
-        ])
+            sceobj_crop_method, RandomHorizontalFlip(), ToTensor(opt.norm_value), normalize])
         #sceobj_spatial_transform = transforms.Compose([
         #    transforms.Resize(256),
         #    transforms.CenterCrop(opt.sceobj_frame_size),
@@ -174,13 +193,8 @@ if __name__ == '__main__':
         training_data = get_training_set(opt, sceobj_spatial_transform, temporal_transform)
         print('len of training data', len(training_data))
 
-        train_loader = DataLoaderX(
-            training_data,
-            batch_size=opt.batch_size,
-            shuffle=True,
-            num_workers=opt.n_threads,
-            pin_memory=True,
-            drop_last=True)
+        train_loader = DataLoaderX(training_data, batch_size=opt.batch_size, shuffle=True,
+                            num_workers=opt.n_threads, pin_memory=True, drop_last=True)
         train_logger = Logger(
             os.path.join(opt.save_path, 'train.log'),
             # ['epoch', 'loss', 'final_mAP_sigmoid', 'final_mAP_softmax', 'lr', 'verb_top1', 'verb_top5']
@@ -191,11 +205,8 @@ if __name__ == '__main__':
     if not opt.no_val:
         temporal_transform = TemporalSegmentCenterCrop(opt.segment_number, opt.sample_duration)
         sceobj_spatial_transform = Compose([
-            Scale(opt.sceobj_frame_size),
-            CenterCrop(opt.sceobj_frame_size),
-            ToTensor(opt.norm_value),
-            normalize
-        ])
+            Scale(opt.sceobj_frame_size), CenterCrop(opt.sceobj_frame_size), ToTensor(opt.norm_value),
+            normalize])
         #sceobj_spatial_transform = transforms.Compose([
         #    transforms.Resize(256),
         #    transforms.CenterCrop(opt.sceobj_frame_size),
@@ -206,17 +217,12 @@ if __name__ == '__main__':
         #])
         validation_data = get_validation_set(opt, sceobj_spatial_transform, temporal_transform)
 
-        val_loader = DataLoaderX(
-            validation_data,
-            batch_size=opt.batch_size,
-            shuffle=False,
-            num_workers=opt.n_threads,
-            pin_memory=True,
-            drop_last=True)
+        val_loader = DataLoaderX(validation_data, batch_size=opt.batch_size, shuffle=False,
+                            num_workers=opt.n_threads, pin_memory=True, drop_last=True)
 
         val_logger = Logger(
             os.path.join(opt.save_path, 'val.log'),
-			# ['epoch', 'final_mAP_sigmoid', 'final_mAP_softmax', 'verb_top1', 'verb_top5']
+            # ['epoch', 'final_mAP_sigmoid', 'final_mAP_softmax', 'verb_top1', 'verb_top5']
             ['epoch', 'top1', 'top5', 'verb_top1', 'verb_top5', 'noun_top1', 'noun_top5',
              'loss', 'verb_loss', 'noun_loss'])
 
@@ -233,18 +239,14 @@ if __name__ == '__main__':
         #    optimizer.load_state_dict(checkpoint['optimizer'])
         del checkpoint
 
-    # train and validation
-
-    #val_epoch(opt.begin_epoch, val_loader, model, opt, val_logger, writer)
-
-    ## scheduler one
+    ## single scheduler
     if opt.scheduler == 'multistep':
         scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.lr_decay)
     elif opt.scheduler == 'plateau':
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=opt.lr_decay, patience=opt.lr_patience, threshold=opt.plateau_thres)
     elif opt.scheduler == 'step':
         scheduler = lr_scheduler.StepLR(optimizer, step_size=opt.lr_decay_step, gamma=opt.lr_decay)
-    ## scheduler two
+    ## two scheduler
     elif opt.scheduler == 'warmup-cosine':
         scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, opt.n_epochs)
         scheduler = GradualWarmupScheduler(optimizer, multiplier=opt.warmup_multiplier, total_epoch=opt.warmup_epoch, after_scheduler=scheduler_cosine)
@@ -264,40 +266,52 @@ if __name__ == '__main__':
                       val_acc=np.zeros((opt.n_epochs+1,)),
                       val_verb_acc=np.zeros((opt.n_epochs+1,)),
                       val_noun_acc=np.zeros((opt.n_epochs+1,))
-    )
+                      )
 
-    for _ in range(1, opt.begin_epoch):
-        scheduler.step()
+    if opt.test:
+        results_dict = test(test_loader, model, opt)
+        for split, results in results_dict.items():
+            if len(results[0]) == 2:
+                keys = results[0][0].keys()
+                for task in keys:
+                    print('Evaluation of {} in {}'.format(task.upper(), split.upper()))
+                    print_accuracy([result[0][task] for result in results],
+                                   [result[1][task] for result in results])
 
-    for i in range(opt.begin_epoch, opt.n_epochs + 1):
-        if not opt.no_train:
-            cudnn.benchmark = True
-            training_metrics = train_epoch(i, train_loader, model, criterion, optimizer, opt, train_logger, writer)
-            for k, v in training_metrics.items():
-                stats_dict[k][i] = v
-
-        if i % opt.checkpoint == 0:
-            save_file_path = os.path.join(opt.save_path, 'train_' + str(i) + '_model.pth')
-            states = {
-                'epoch': i,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),}
-            torch.save(states, save_file_path)
-
-        if not opt.no_val and i % opt.val_per_epoches == 0:
-            test_metrics = val_epoch(i, val_loader, model, criterion, opt, val_logger, writer)
-            for k, v in test_metrics.items():
-                stats_dict[k][i] = v
-
-        if type(scheduler) == lr_scheduler.ReduceLROnPlateau:
-            scheduler.step(training_metrics['train_loss'])
-        else:
+        save_scores(results_dict, opt.save_path)
+    else:
+        for _ in range(1, opt.begin_epoch):
             scheduler.step()
 
-    writer.close()
+        for i in range(opt.begin_epoch, opt.n_epochs + 1):
+            if not opt.no_train:
+                cudnn.benchmark = True
+                training_metrics = train_epoch(i, train_loader, model, criterion, optimizer, opt, train_logger, writer)
+                for k, v in training_metrics.items():
+                    stats_dict[k][i] = v
 
-    save_stats_dir = os.path.join(opt.save_path, 'stats')
-    if not os.path.exists(save_stats_dir):
-        os.makedirs(save_stats_dir)
-    with open(os.path.join(save_stats_dir, 'training_stats.npz'), 'wb') as f:
-        np.savez(f, **stats_dict)
+            if (i < 60 and i % (opt.checkpoint * 2) == 0) or (i >= 60 and i % opt.checkpoint == 0):
+                save_file_path = os.path.join(opt.save_path, 'train_' + str(i) + '_model.pth')
+                states = {
+                    'epoch': i,
+                    'state_dict': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),}
+                torch.save(states, save_file_path)
+
+            if not opt.no_val and i % opt.val_per_epoches == 0:
+                test_metrics = val_epoch(i, val_loader, model, criterion, opt, val_logger, writer)
+                for k, v in test_metrics.items():
+                    stats_dict[k][i] = v
+
+            if type(scheduler) == lr_scheduler.ReduceLROnPlateau:
+                scheduler.step(training_metrics['train_loss'])
+            else:
+                scheduler.step()
+
+        writer.close()
+
+        save_stats_dir = os.path.join(opt.save_path, 'stats')
+        if not os.path.exists(save_stats_dir):
+            os.makedirs(save_stats_dir)
+        with open(os.path.join(save_stats_dir, 'training_stats.npz'), 'wb') as f:
+            np.savez(f, **stats_dict)

@@ -262,6 +262,8 @@ def parse_opts():
         help='Trained model is saved at every this epochs.')
 
     # other
+    parser.add_argument( '--test', action='store_true',
+        help='If true, training is not performed.')
     parser.add_argument(
         '--n_threads',
         default=8,

@@ -82,19 +82,26 @@ def load_annotation_data(data_file_path, dataset_break=5):
 	return data
 
 
-def get_video_names(metadata, video_path_full):
+def get_video_names(metadata, video_path_full, mode='train'):
 	video_names = []
-	for data in metadata:
-		video_fn = '{}/{}/{}_{}_{}'.format(data['participant_id'], data['video_id'], data['video_id'],
-											  data['uid'], data['narration'].replace(' ', '-'))
-		video_names.append(os.path.join(video_path_full, video_fn))
+
+	if mode == 'test':
+		for data in metadata:
+			video_fn = '{}/{}/{}_{}_{}'.format(data['participant_id'], data['video_id'], data['video_id'],
+												  data['uid'], 'unnarrated')
+			video_names.append(os.path.join(video_path_full, video_fn))
+	else:
+		for data in metadata:
+			video_fn = '{}/{}/{}_{}_{}'.format(data['participant_id'], data['video_id'], data['video_id'],
+												  data['uid'], data['narration'].replace(' ', '-'))
+			video_names.append(os.path.join(video_path_full, video_fn))
 
 	return video_names
 
 
-def make_dataset(video_path, annotation_path, dataset_break):
+def make_dataset(video_path, annotation_path, dataset_break, mode='train'):
 	annotations = load_annotation_data(annotation_path, dataset_break)
-	video_names = get_video_names(annotations, video_path)
+	video_names = get_video_names(annotations, video_path, mode)
 
 	print('len of video_names', len(video_names))
 	dataset = []
@@ -117,13 +124,11 @@ def make_dataset(video_path, annotation_path, dataset_break):
 			'n_frames': n_frames,
 			'frame_indices': frame_indices
 		}
-		# ipdb.set_trace()
-		verb_label, noun_label = int(annotations[i]['verb_class']), int(annotations[i]['noun_class'])
-		# verb_label, noun_label = np.zeros(class_num[0]), np.zeros(class_num[1])
-		# verb_label[int(annotations[i]['verb_class'])] = 1
-		# noun_label[int(annotations[i]['noun_class'])] = 1
 
-		sample['label'] = {'verb': verb_label, 'noun': noun_label}
+		if 'verb_class' in annotations[i]:
+			sample['label'] = {'verb': annotations[i]['verb_class'], 'noun': annotations[i]['noun_class']}
+		else:	# Fake label to deal with the test sets (S1/S2) that dont have any labels
+			sample['label'] = -10000
 
 		dataset.append(sample)
 		# test_file.write(sample['video_id'] + ' ' + class_indexs + '\n')
@@ -138,7 +143,8 @@ class EPIC(data.Dataset):
 	def __init__(self,
 				 video_path,
 				 annotation_path,
-				 object_feature_path,
+				 mode='train',
+				 object_feature_path=None,
 				 dataset_break=5,
 				 spatial_transform=None,
 				 temporal_transform=None,
@@ -146,7 +152,8 @@ class EPIC(data.Dataset):
 				 obj_feature_type=None,
 				 use_obj_feature=False):
 
-		self.data = make_dataset(video_path, annotation_path, dataset_break)
+		self.mode = mode
+		self.data = make_dataset(video_path, annotation_path, dataset_break, self.mode)
 
 		self.spatial_transform = spatial_transform
 		self.temporal_transform = temporal_transform

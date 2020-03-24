@@ -33,6 +33,7 @@ def get_training_set(opt, sceobj_spatial_transform, temporal_transform):
         training_data = EPIC(
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_train_action_labels.pkl'),
+            mode='train',
             obj_feature_type=opt.object_feature_type,
             dataset_break=opt.dataset_break,
             spatial_transform=sceobj_spatial_transform,
@@ -69,6 +70,7 @@ def get_validation_set(opt, sceobj_spatial_transform, temporal_transform):
         validation_data = EPIC(
             opt.video_path,
             os.path.join(opt.annotation_path, 'EPIC_val_action_labels.pkl'),
+            mode='val',
             object_feature_path=opt.object_feature_path,
             dataset_break=opt.dataset_break,
             spatial_transform=sceobj_spatial_transform,
@@ -79,11 +81,13 @@ def get_validation_set(opt, sceobj_spatial_transform, temporal_transform):
 
 
 def get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='seen'):
+    video_path = opt.video_path.split('/')[-1]
 
     if test_set == 'seen':
         test_data = EPIC(
-            opt.video_path,
-            test_timestamps('seen'),
+            opt.video_path.replace(video_path, 'test_seen_' + video_path),
+            os.path.join(opt.annotation_path, 'EPIC_test_s1_timestamps.pkl'),
+            mode='test',
             spatial_transform=sceobj_spatial_transform,
             temporal_transform=temporal_transform,
             object_feature_path=opt.object_feature_path,
@@ -91,8 +95,9 @@ def get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='se
             use_obj_feature=opt.use_object_feature)
     elif test_set == 'unseen':
         test_data = EPIC(
-            opt.video_path,
-            test_timestamps('unseen'),
+            opt.video_path.replace(video_path, 'test_unseen_' + video_path),
+            os.path.join(opt.annotation_path, 'EPIC_test_s2_timestamps.pkl'),
+            mode='test',
             spatial_transform=sceobj_spatial_transform,
             temporal_transform=temporal_transform,
             object_feature_path=opt.object_feature_path,
