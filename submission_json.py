@@ -141,5 +141,5 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("results_dir", type=Path)
     parser.add_argument("submission_json", type=Path)
-    parser.add_argument("annotation_path", type=str, default='/mnt/shared_40t/dwd/epic-kitchens/orn/data/EPIC/meta')
+    parser.add_argument("--annotation_path", type=str, default='/mnt/shared_40t/dwd/epic-kitchens/orn/data/EPIC/meta')
     main(parser.parse_args())
