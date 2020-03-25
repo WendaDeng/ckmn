@@ -163,10 +163,10 @@ if __name__ == '__main__':
         seen_test_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='seen')
         unseen_test_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='unseen')
 
-        seen_test_loader = DataLoaderX(seen_test_data, batch_size=opt.batch_size, shuffle=False,
-                                num_workers=opt.n_threads, pin_memory=True, drop_last=True)
-        unseen_test_loader = DataLoaderX(unseen_test_data, batch_size=opt.batch_size, shuffle=False,
-                                num_workers=opt.n_threads, pin_memory=True, drop_last=True)
+        seen_test_loader = DataLoaderX(seen_test_data, batch_size=1, shuffle=False,
+                                num_workers=opt.n_threads * 2)
+        unseen_test_loader = DataLoaderX(unseen_test_data, batch_size=1, shuffle=False,
+                                num_workers=opt.n_threads * 2)
         test_loader = dict(seen_test_loader=seen_test_loader, unseen_test_loader=unseen_test_loader)
 
     ## prepare train
