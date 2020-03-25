@@ -14,10 +14,10 @@ from opts import parse_opts
 from dataloaders.dataset import get_training_set, get_validation_set, get_test_set
 
 from model import generate_model
-from utils import Logger, get_fine_tuning_parameters
+from utils import Logger
 from train_1 import train_epoch
 from validation import val_epoch
-from test import test, print_accuracy, save_scores
+from test import test, save_scores
 
 import torchvision.transforms as transforms
 from temporal_transforms import TemporalSegmentRandomCrop, TemporalSegmentCenterCrop
@@ -232,9 +232,9 @@ if __name__ == '__main__':
         checkpoint = torch.load(opt.resume_path, map_location=opt.device)
 
         opt.begin_epoch = checkpoint['epoch']
-        #state_dict = {str.replace(k, 'module.', ''):v for k, v in checkpoint['state_dict'].items()}
-        #model.load_state_dict(state_dict)
-        model.load_state_dict(checkpoint['state_dict'])
+        state_dict = {str.replace(k, 'module.', ''):v for k, v in checkpoint['state_dict'].items()}
+        model.load_state_dict(state_dict)
+        # model.load_state_dict(checkpoint['state_dict'])
         #if not opt.no_train:
         #    optimizer.load_state_dict(checkpoint['optimizer'])
         del checkpoint
@@ -270,13 +270,6 @@ if __name__ == '__main__':
 
     if opt.test:
         results_dict = test(test_loader, model, opt)
-        for split, results in results_dict.items():
-            if len(results[0]) == 2:
-                keys = results[0][0].keys()
-                for task in keys:
-                    print('Evaluation of {} in {}'.format(task.upper(), split.upper()))
-                    print_accuracy([result[0][task] for result in results],
-                                   [result[1][task] for result in results])
 
         save_scores(results_dict, opt.save_path)
     else:

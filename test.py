@@ -32,11 +32,7 @@ def test(data_loader, model, opt):
                     outputs = model(inputs)
 
                 rst = {'verb': outputs[0], 'noun': outputs[1]}
-                if targets != -10000:  # targets exists
-                    targets_ = {k: v.item() for k, v in targets.items()}
-                    results.append((rst, targets_))
-                else:  # Test set (S1/S2)
-                    results.append((rst,))
+                results.append((rst,))
 
                 cnt_time = time.time() - start_time
                 print('video {} done, total {}/{}, average {} sec/video'.format(
