@@ -160,14 +160,14 @@ if __name__ == '__main__':
         sceobj_spatial_transform = Compose([Scale(opt.sceobj_frame_size),
                                     CenterCrop(opt.sceobj_frame_size), ToTensor(opt.norm_value), normalize])
 
-        seen_test_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='seen')
-        unseen_test_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='unseen')
+        test_seen_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='seen')
+        test_unseen_data = get_test_set(opt, sceobj_spatial_transform, temporal_transform, test_set='unseen')
 
-        seen_test_loader = DataLoaderX(seen_test_data, batch_size=1, shuffle=False,
+        test_seen_loader = DataLoaderX(test_seen_data, batch_size=1, shuffle=False,
                                 num_workers=opt.n_threads * 2)
-        unseen_test_loader = DataLoaderX(unseen_test_data, batch_size=1, shuffle=False,
+        test_unseen_loader = DataLoaderX(test_unseen_data, batch_size=1, shuffle=False,
                                 num_workers=opt.n_threads * 2)
-        test_loader = dict(seen_test_loader=seen_test_loader, unseen_test_loader=unseen_test_loader)
+        test_loader = dict(test_seen=test_seen_loader, test_unseen=test_unseen_loader)
 
     ## prepare train
     if not opt.no_train:

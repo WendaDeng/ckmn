@@ -17,18 +17,18 @@ def center_get_frame_names(temp_frame_names, duration):
     return out
 
 def random_get_frame_names(temp_frame_names, duration):
-    # rand_end = max(0, len(temp_frame_names) - duration - 1)
-    # begin_index = random.randint(0, rand_end)
-    # end_index = min(begin_index + duration, len(temp_frame_names))
-    #
-    # out = temp_frame_names[begin_index:end_index]
+    rand_end = max(0, len(temp_frame_names) - duration - 1)
+    begin_index = random.randint(0, rand_end)
+    end_index = min(begin_index + duration, len(temp_frame_names))
 
-    frame_num = len(temp_frame_names)
-    sample_num = min(frame_num, duration)
-    inds = sorted(random.sample(range(frame_num), sample_num))
-    out = []
-    for i in inds:
-        out.append(temp_frame_names[i])
+    out = temp_frame_names[begin_index:end_index]
+
+    # frame_num = len(temp_frame_names)
+    # sample_num = min(frame_num, duration)
+    # inds = sorted(random.sample(range(frame_num), sample_num))
+    # out = []
+    # for i in inds:
+    #     out.append(temp_frame_names[i])
 
     for index in out:
         if len(out) >= duration:
