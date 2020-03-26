@@ -31,7 +31,8 @@ def test(data_loader, model, opt):
                     inputs = inputs.to(opt.device)
                     outputs = model(inputs)
 
-                rst = {'verb': outputs[0], 'noun': outputs[1]}
+                rst = {'verb': average_crops(outputs[0], opt.event_classes[0], opt.segment_number),
+                       'noun': average_crops(outputs[1], opt.event_classes[0], opt.segment_number)}
                 results.append((rst,))
 
                 cnt_time = time.time() - start_time
@@ -40,6 +41,14 @@ def test(data_loader, model, opt):
             results_dict[split] = results
 
     return results_dict
+
+
+def average_crops(results, num_class, test_segments, num_crop=1):
+
+    return results.cpu().numpy()\
+              .reshape((num_crop, test_segments, num_class))\
+              .mean(axis=0)\
+              .reshape((test_segments, 1, num_class))
 
 
 def print_accuracy(scores, labels):
