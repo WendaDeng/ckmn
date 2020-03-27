@@ -41,7 +41,7 @@ def compute_action_scores(verb_scores, noun_scores, n=100):
     instance_count = action_probs_matrix.shape[0]
     action_ranks = action_probs_matrix.reshape(instance_count, -1).argsort(axis=-1)[:, ::-1]
     verb_ranks_idx, noun_ranks_idx = np.unravel_index(action_ranks[:, :n],
-                                                      dims=(action_probs_matrix.shape[1:]))
+                                                      shape=(action_probs_matrix.shape[1:]))
 
     # TODO: Reshape, argsort, then convert back to verb/noun indices
     segments = np.arange(0, instance_count).reshape(-1, 1)
