@@ -30,9 +30,13 @@ def get_training_set(opt, sceobj_spatial_transform, temporal_transform):
             spatial_transform=sceobj_spatial_transform,
             temporal_transform=temporal_transform)
     elif opt.dataset == 'EPIC':
+        if opt.no_val:
+            anno_path = os.path.join(opt.annotation_path, 'EPIC_full_train_action_labels.pkl')
+        else:
+            anno_path = os.path.join(opt.annotation_path, 'EPIC_train_action_labels.pkl')
         training_data = EPIC(
             opt.video_path,
-            os.path.join(opt.annotation_path, 'EPIC_train_action_labels.pkl'),
+            anno_path,
             mode='train',
             obj_feature_type=opt.object_feature_type,
             dataset_break=opt.dataset_break,
