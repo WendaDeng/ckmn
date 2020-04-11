@@ -4,7 +4,7 @@ from networks import model_ac
 from networks import model_acob
 from networks import model_scob
 from networks import model_3detectors
-from networks import model_2detectors_graph
+from networks import model_ac_gcn
 from networks import model_3detectors_nonlocal
 from networks import model_3detectors_dilated
 from networks import model_3detectors_dilated_nonlocal
@@ -53,21 +53,19 @@ def generate_model(opt):
         parameters.append({'params': temp_conv})
         parameters.append({'params': temp})
 
-    elif opt.model_name == 'FtDetectorFc-2detectors-Graph':
-        model = model_2detectors_graph.Event_Model(opt)
+    elif opt.model_name == 'FtDetectorFc-Ac-Graph':
+        model = model_ac_gcn.Event_Model(opt)
 
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
 
-        detectors_ft_module_names = 'object_detector.fc'
-        action_detectors_ft_module_names = 'action_detector.logits'
+        action_detectors_ft_module_names = ['action_detector.logits']
+        for l in opt.action_ft_layers.split(','):
+            action_detectors_ft_module_names.append('action_detector.Mixed_' + l)
         temp_fc = []
 
-        scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun']
+        scratch_train_module_names = ['fc1', 'final_classifier', 'fc_verb', 'fc_noun', 'gc1', 'gc2', 'gc3', 'gc4']
         temp_scratch = []
-
-        graph_weight = 'gcn'
-        temp_graph = []
 
         parameters = []
         for k, v in model.named_parameters():
@@ -75,10 +73,8 @@ def generate_model(opt):
                 print('a', k)
                 temp_conv.append(v)
 
-            elif action_detectors_ft_module_names in k:
-                print('b', k)
-                temp_fc.append(v)
-            elif k[:-5] in detectors_ft_module_names or k[:-7] in detectors_ft_module_names:
+            elif k[:-5] in action_detectors_ft_module_names or k[:-7] in action_detectors_ft_module_names or \
+                    k[:23] in action_detectors_ft_module_names:
                 print('b', k)
                 temp_fc.append(v)
 
@@ -87,7 +83,7 @@ def generate_model(opt):
                 temp_scratch.append(v)
             else:
                 v.requires_grad = False
-        temp = temp_fc + temp_scratch + temp_graph
+        temp = temp_fc + temp_scratch
         parameters.append({'params': temp_conv})
         parameters.append({'params': temp})
 

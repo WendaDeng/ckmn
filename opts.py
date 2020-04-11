@@ -260,6 +260,7 @@ def parse_opts():
         default=2,
         type=int,
         help='Trained model is saved at every this epochs.')
+    parser.add_argument('--drop_rate', default=0.5, type=float)
 
     # other
     parser.add_argument( '--test', action='store_true',

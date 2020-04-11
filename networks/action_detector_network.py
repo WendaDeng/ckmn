@@ -751,10 +751,6 @@ def Action_Detector(opt=None):
     elif opt.action_base_model == 'I3D':
         weight_dir = '../weights/rgb_imagenet.pt'
         model = I3D(opt, weight_dir)
-        # return_layers = {'Mixed_4b': 0, 'Mixed_4c': 1, 'Mixed_4d': 2, 'Mixed_4e': 3,
-        #                  'Mixed_4f': 4, 'Mixed_5b': 5, 'Mixed_5c': 6}
-        # out_channels = 256
-        # return Backbone(model, return_layers, out_channels)
     elif opt.action_base_model == "ft_I3D":
         weight_dir = '../weights/epic_I3D.pth'
         model = fine_tuned_I3D(opt, weight_dir)
