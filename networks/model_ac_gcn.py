@@ -38,7 +38,7 @@ class Event_Model(nn.Module):
 
 
     def _add_classification_layers(self, input_dim, hidden_dim):
-        self.fc1 = nn.Linear(2 * input_dim, hidden_dim)
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
             self.fc_verb = nn.Linear(hidden_dim, self.num_class[0])
             self.fc_noun = nn.Linear(hidden_dim, self.num_class[1])
@@ -61,8 +61,10 @@ class Event_Model(nn.Module):
 
         graph_feature = []
         for i in range(N):
-            x = action_feature[i]
+            x = action_feature[i].cpu().data
             x, adj = graph_layers.graph_generator(x)
+            x = torch.from_numpy(x).to(action_feature.device)
+            adj = torch.from_numpy(adj).to(action_feature.device)
             # Graph Convolution
             x1 = self.relu(self.gc1(x, adj))
             x1 = self.gc2(x1, adj)
@@ -75,7 +77,7 @@ class Event_Model(nn.Module):
             adj2 = torch.exp(x2 - x2.max(dim=1, keepdim=True)[0])  # 1 + x2 / x_norm
             d_inv_sqrt2 = torch.diag(torch.pow(torch.sum(adj2, dim=1), -0.5))
             adj_hat2 = d_inv_sqrt2.matmul(adj2).matmul(d_inv_sqrt2)
-            adj_hat2 = adj_hat2.view(x.shape[0], adj_hat2.shape[0], adj_hat2.shape[1])
+            adj_hat2 = adj_hat2.view(1, adj_hat2.shape[0], adj_hat2.shape[1])
 
             y2 = self.relu(self.gc3(x, adj_hat2))
 
@@ -86,7 +88,7 @@ class Event_Model(nn.Module):
             # adj3 = 1 + y22 / y2_norm
             # d_inv_sqrt3 = torch.diag(torch.pow(torch.sum(adj3, dim=1), -0.5))
             # adj_hat3 = d_inv_sqrt3.matmul(adj3).matmul(d_inv_sqrt3)
-            # adj_hat3 = adj_hat3.view(x.shape[0], adj_hat3.shape[0], adj_hat3.shape[1])
+            # adj_hat3 = adj_hat3.view(1, adj_hat3.shape[0], adj_hat3.shape[1])
 
             y2 = self.gc4(y2, adj_hat2)
             # y2 = self.gc4(y2, adj3_hat)
@@ -94,26 +96,28 @@ class Event_Model(nn.Module):
             graph_feature.append((x1 + y2) / 2.0)
 
         graph_feature = torch.stack(graph_feature, 0)
+        graph_feature = graph_feature.view(N, T, -1)
         ## max pooling N T F -> N F
         action_feature, _ = torch.max(action_feature, dim=1)
-        classification = torch.cat((action_feature, graph_feature), 1)
+        graph_feature, _ = torch.max(graph_feature, dim=1)
+        classification = action_feature + graph_feature
 
         ## classification
-        classification = self.relu(self.fc1(classification))
+        classification = self.relu(classification)
         classification = self.dropout(classification)
+        classification = self.fc1(classification)
 
+        classification = self.relu(classification)
+        classification = self.dropout(classification)
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
             # Verb
-            base_out_verb = self.relu(self.fc_verb(classification))
-            base_out_verb = self.dropout(base_out_verb)
+            base_out_verb = self.fc_verb(classification)
 
             # Noun
-            base_out_noun = self.relu(self.fc_noun(classification))
-            base_out_noun = self.dropout(base_out_noun)
+            base_out_noun = self.fc_noun(classification)
 
             output = (base_out_verb, base_out_noun)
         else:
-            output = self.relu(self.final_classifier(classification))
-            output = self.dropout(output)
+            output = self.final_classifier(classification)
 
         return output
