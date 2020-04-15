@@ -2,6 +2,7 @@ from networks import model_sc
 from networks import model_ob
 from networks import model_ac
 from networks import model_acob
+from networks import model_acobj
 from networks import model_scob
 from networks import model_3detectors
 from networks import model_ac_gcn
@@ -184,7 +185,7 @@ def generate_model(opt):
         parameters.append({'params': temp})
 
     elif opt.model_name == 'FtDetectorFc-AcObj':
-        model = model_ac.Event_Model(opt)
+        model = model_acobj.Event_Model(opt)
 
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
