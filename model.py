@@ -189,7 +189,7 @@ def generate_model(opt):
         conv_ft_module_names = 'layer4.2.conv3'
         temp_conv = []
 
-        detectors_ft_module_names = ['scene_detector.fc', 'object_detector.fc']
+        detectors_ft_module_names = ['object_detector.fc', 'object_detector.layer4']
         action_detectors_ft_module_names = ['action_detector.logits']
         for l in opt.action_ft_layers.split(','):
             action_detectors_ft_module_names.append('action_detector.Mixed_' + l)
@@ -207,7 +207,8 @@ def generate_model(opt):
                     k[:23] in action_detectors_ft_module_names:
                 print('b', k)
                 temp_fc.append(v)
-            elif k[:-5] in detectors_ft_module_names or k[:-7] in detectors_ft_module_names:
+            elif k[:-5] in detectors_ft_module_names or k[:-7] in detectors_ft_module_names or \
+                    k[:22] in detectors_ft_module_names:
                 print('b', k)
                 temp_fc.append(v)
             elif k[:-5] in scratch_train_module_names or k[:-7] in scratch_train_module_names:
