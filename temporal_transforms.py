@@ -104,14 +104,18 @@ class TemporalSegmentRandomCrop(object):
         frame_indices = [frame_indice.strip() for frame_indice in frame_indices]
 
         segment_frame_numbers = math.floor(len(frame_indices) / self.segment_number)
+        half = int(segment_frame_numbers / 2)
 
         frames_list = []
         for i in range(self.segment_number):
             # temp_frames_list = []
-            if i == self.segment_number - 1:
-                temp_segment_frame_names = frame_indices[i * segment_frame_numbers:]
+            if i == 0:
+                temp_segment_frame_names = frame_indices[:(i+1) * segment_frame_numbers + half]
+            elif i == self.segment_number - 1:
+                temp_segment_frame_names = frame_indices[i * segment_frame_numbers - half:]
             else:
-                temp_segment_frame_names = frame_indices[i * segment_frame_numbers: (i + 1) * segment_frame_numbers]
+                temp_segment_frame_names = frame_indices[i * segment_frame_numbers - half:
+                                                         (i + 1) * segment_frame_numbers +half]
 
             segment_frame_names = random_get_frame_names(temp_segment_frame_names, self.sample_duration)
 
