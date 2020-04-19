@@ -235,7 +235,7 @@ def generate_model(opt):
         temp_fc = []
 
         scratch_train_module_names = ['concat_reduce_dim', 'final_classifier', 'fc_verb', 'fc_noun',
-                                      'gc1', 'gc2', 'gc3', 'gc4']
+                                      'object_fc', 'action_fc', 'fc1', 'gc1', 'gc2', 'gc3', 'gc4']
         temp_scratch = []
 
         parameters = []
