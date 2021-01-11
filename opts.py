@@ -291,7 +291,10 @@ def parse_opts():
         '--manual_seed', default=1, type=int, help='Manually set random seed')
     parser.add_argument(
         '--dataset_break', default=5, type=int, help='Sampling break of dataset')
-
+    parser.add_argument(
+        '--graph_fusion', type=str, default='max', help='mean | max | concat')
+    parser.add_argument(
+        '--graph_type', type=str, default='both', help='both | temporal | spatial')
     args = parser.parse_args()
 
     return args

@@ -233,6 +233,7 @@ if __name__ == '__main__':
 
         opt.begin_epoch = checkpoint['epoch']
         state_dict = {str.replace(k, 'module.', ''):v for k, v in checkpoint['state_dict'].items()}
+        # state_dict = {k:v for k, v in checkpoint['state_dict'].items()}
         model.load_state_dict(state_dict)
         # model.load_state_dict(checkpoint['state_dict'])
         #if not opt.no_train:

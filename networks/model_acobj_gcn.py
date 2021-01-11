@@ -14,6 +14,8 @@ class Event_Model(nn.Module):
         self.concept_number = opt.object_classes + opt.action_classes
         self.latent_dimension = 1024
         self.num_class = opt.event_classes
+        self.graph_fusion = opt.graph_fusion
+        self.graph_type = opt.graph_type
 
         self.object_detector = object_detector_network.Object_Detector(opt)
         self.action_detector = action_detector_network.Action_Detector(opt)
@@ -102,8 +104,12 @@ class Event_Model(nn.Module):
 
             # y2 = self.gc4(y2, adj_hat2)
             y2 = self.gc4(y2, adj_hat3)
-
-            obj_graph_feature.append((x1 + y2) / 2.0)
+            if self.graph_type == 'both':
+                obj_graph_feature.append((x1 + y2) / 2.0)
+            elif self.graph_type == 'temporal':
+                obj_graph_feature.append(x1)
+            elif self.graph_type == 'spatial':
+                obj_graph_feature.append(y2)
 
         obj_graph_feature = torch.stack(obj_graph_feature, 0)
         # NT D F -> N T D F
@@ -113,7 +119,10 @@ class Event_Model(nn.Module):
         obj_graph_feature = torch.mean(obj_graph_feature, dim=2)
         object_feature, _ = torch.max(object_feature, dim=2)
 
-        object_feature = object_feature + obj_graph_feature
+        if self.graph_fusion == 'mean':
+            object_feature = object_feature + obj_graph_feature
+        elif self.graph_fusion == 'max':
+            object_feature = torch.max(object_feature, obj_graph_feature)
 
         ## action frame inpupt size N T C D aH aW
         # N T C D aH aW ->  NT C D aH aW
@@ -126,11 +135,11 @@ class Event_Model(nn.Module):
         
         ## max pooling
         # N T F -> N F
-        object_feature, _ = torch.max(object_feature, dim=1)
-        action_feature, _ = torch.max(action_feature, dim=1)
+        # object_feature, _ = torch.max(object_feature, dim=1)
+        # action_feature, _ = torch.max(action_feature, dim=1)
 
         ## concat & classification  size: (N self.concept_number)
-        classification = torch.cat((object_feature, action_feature), 1)
+        classification = torch.cat((object_feature, action_feature), -1)
         del object_feature, action_feature
 
         classification = self.relu(classification)
@@ -142,10 +151,13 @@ class Event_Model(nn.Module):
 
         if isinstance(self.num_class, (list, tuple)):  # Multi-task
             base_out_verb = self.fc_verb(classification)
+            base_out_verb = torch.mean(base_out_verb, dim=-2)
             base_out_noun = self.fc_noun(classification)
+            base_out_noun = torch.mean(base_out_noun, dim=-2)
 
             output = (base_out_verb, base_out_noun)
         else:
             output = self.final_classifier(classification)
+            output = torch.mean(output, dim=-2)
 
         return output

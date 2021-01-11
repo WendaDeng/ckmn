@@ -31,10 +31,10 @@ class Event_Model(nn.Module):
 
     def _add_graph_layers(self, input_dim, output_dim):
         # Graph Convolution
-        self.gc1 = graph_layers.GraphConvolution(input_dim, 32)  # nn.Linear(128, 32)
-        self.gc2 = graph_layers.GraphConvolution(32, output_dim)
-        self.gc3 = graph_layers.GraphConvolution(input_dim, 32)  # nn.Linear(128, 32)
-        self.gc4 = graph_layers.GraphConvolution(32, output_dim)  # nn.Linear(128, 32)
+        self.gc1 = graph_layers.GraphConvolution(input_dim, 64)  # nn.Linear(128, 32)
+        self.gc2 = graph_layers.GraphConvolution(64, output_dim)
+        self.gc3 = graph_layers.GraphConvolution(input_dim, 64)  # nn.Linear(128, 32)
+        self.gc4 = graph_layers.GraphConvolution(64, output_dim)  # nn.Linear(128, 32)
 
 
     def _add_classification_layers(self, input_dim, hidden_dim):
@@ -81,17 +81,17 @@ class Event_Model(nn.Module):
 
             y2 = self.relu(self.gc3(x, adj_hat2))
 
-            # y22 = y2.view(-1, y2.shape[-1])
-            # y22 = y22.matmul(y22.t())
-            # y2_norm = torch.norm(y22, p=2, dim=1).view(-1, 1)
-            # y2_norm = y2_norm.matmul(y2_norm.t())
-            # adj3 = 1 + y22 / y2_norm
-            # d_inv_sqrt3 = torch.diag(torch.pow(torch.sum(adj3, dim=1), -0.5))
-            # adj_hat3 = d_inv_sqrt3.matmul(adj3).matmul(d_inv_sqrt3)
-            # adj_hat3 = adj_hat3.view(1, adj_hat3.shape[0], adj_hat3.shape[1])
+            y22 = y2.view(-1, y2.shape[-1])
+            y22 = y22.matmul(y22.t())
+            y2_norm = torch.norm(y22, p=2, dim=1).view(-1, 1)
+            y2_norm = y2_norm.matmul(y2_norm.t())
+            adj3 = 1 + y22 / y2_norm
+            d_inv_sqrt3 = torch.diag(torch.pow(torch.sum(adj3, dim=1), -0.5))
+            adj_hat3 = d_inv_sqrt3.matmul(adj3).matmul(d_inv_sqrt3)
+            adj_hat3 = adj_hat3.view(1, adj_hat3.shape[0], adj_hat3.shape[1])
 
-            y2 = self.gc4(y2, adj_hat2)
-            # y2 = self.gc4(y2, adj3_hat)
+            # y2 = self.gc4(y2, adj_hat2)
+            y2 = self.gc4(y2, adj_hat3)
 
             graph_feature.append((x1 + y2) / 2.0)
 
@@ -99,7 +99,7 @@ class Event_Model(nn.Module):
         graph_feature = graph_feature.view(N, T, -1)
         ## max pooling N T F -> N F
         action_feature, _ = torch.max(action_feature, dim=1)
-        graph_feature, _ = torch.max(graph_feature, dim=1)
+        graph_feature = torch.mean(graph_feature, dim=1)
         classification = action_feature + graph_feature
 
         ## classification
